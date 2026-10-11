@@ -5,6 +5,7 @@ import com.civiceye.ai.auth.dto.LoginRequest;
 import com.civiceye.ai.auth.dto.RegisterRequest;
 import com.civiceye.ai.exception.BadRequestException;
 import com.civiceye.ai.exception.UnauthorizedException;
+import com.civiceye.ai.security.JwtTokenProvider;
 import com.civiceye.ai.user.Role;
 import com.civiceye.ai.user.User;
 import com.civiceye.ai.user.UserRepository;
@@ -12,17 +13,19 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.UUID;
-
 @Service
 public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtTokenProvider jwtTokenProvider;
 
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public AuthService(UserRepository userRepository,
+                       PasswordEncoder passwordEncoder,
+                       JwtTokenProvider jwtTokenProvider) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtTokenProvider = jwtTokenProvider;
     }
 
     @Transactional
@@ -48,7 +51,8 @@ public class AuthService {
 
         User savedUser = userRepository.save(user);
 
-        String token = generateToken(savedUser);
+        String token = jwtTokenProvider.generateToken(savedUser);
+        long expiresIn = jwtTokenProvider.getExpirationMs();
 
         return AuthResponse.builder()
                 .token(token)
@@ -58,7 +62,7 @@ public class AuthService {
                 .email(savedUser.getEmail())
                 .fullName(savedUser.getFullName())
                 .role(savedUser.getRole())
-                .expiresIn(86400000L)
+                .expiresIn(expiresIn)
                 .build();
     }
 
@@ -76,7 +80,8 @@ public class AuthService {
             throw new UnauthorizedException("Account has been disabled. Please contact administration.");
         }
 
-        String token = generateToken(user);
+        String token = jwtTokenProvider.generateToken(user);
+        long expiresIn = jwtTokenProvider.getExpirationMs();
 
         return AuthResponse.builder()
                 .token(token)
@@ -86,14 +91,13 @@ public class AuthService {
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .role(user.getRole())
-                .expiresIn(86400000L)
+                .expiresIn(expiresIn)
                 .build();
     }
 
-    private String generateToken(User user) {
-        // Generates an authenticated session token for Phase 1
-        return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
-                UUID.randomUUID().toString().replace("-", "") + "." +
-                user.getId();
+    @Transactional(readOnly = true)
+    public User getCurrentUser(String username) {
+        return userRepository.findByUsernameOrEmail(username)
+                .orElseThrow(() -> new UnauthorizedException("User not found: " + username));
     }
 }

@@ -34,6 +34,9 @@ class AuthServiceTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
+    @Mock
+    private com.civiceye.ai.security.JwtTokenProvider jwtTokenProvider;
+
     @InjectMocks
     private AuthService authService;
 
@@ -67,6 +70,9 @@ class AuthServiceTest {
                 .fullName("John Doe")
                 .role(Role.CITIZEN)
                 .build();
+
+        lenient().when(jwtTokenProvider.generateToken(any(User.class))).thenReturn("test-token");
+        lenient().when(jwtTokenProvider.getExpirationMs()).thenReturn(86400000L);
     }
 
     // ==========================================
