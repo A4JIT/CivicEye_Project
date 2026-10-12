@@ -1,0 +1,11 @@
+package com.civiceye.ai.complaint;
+
+public enum ComplaintCategory {
+    ROADS_AND_FOOTPATHS,
+    GARBAGE_AND_CLEANLINESS,
+    WATER_SUPPLY_AND_LEAKAGE,
+    DRAINAGE_AND_SEWAGE,
+    STREETLIGHTS_AND_ELECTRICITY,
+    PUBLIC_HEALTH_HAZARDS,
+    OTHER
+}

@@ -22,8 +22,12 @@ database/
 
 ### Option 1: Using `psql` command line
 ```bash
-# Connect to your local PostgreSQL instance
+# Connect to your local PostgreSQL instance and run migrations in order:
 psql -U postgres -d civiceye -f database/migrations/V1__create_users.sql
+psql -U postgres -d civiceye -f database/migrations/V2__create_departments.sql
+psql -U postgres -d civiceye -f database/migrations/V3__create_complaints.sql
+
+# Load development seed data (users, departments, sample complaints)
 psql -U postgres -d civiceye -f database/seed/development_data.sql
 ```
 
@@ -32,6 +36,17 @@ When starting the PostgreSQL container via docker-compose:
 ```bash
 docker-compose up -d
 ```
+
+## Migration Catalog
+
+| Migration | Description | Status |
+|-----------|-------------|--------|
+| `V1__create_users.sql` | Users table schema, roles constraint, indexes | Phase 1 (Complete) |
+| `V2__create_departments.sql` | Municipal departments table with code, contact, indexes | Phase 2 (Complete) |
+| `V3__create_complaints.sql` | Core complaint filing schema, geo-coordinates, status & priority constraints | Phase 2 (Complete) |
+| `V4__create_assignments.sql` | Officer assignment & workflow dispatch | Planned Phase 3 |
+| `V5__create_status_history.sql`| Complaint audit history & lifecycle transitions | Planned Phase 3 |
+| `V6__create_feedback.sql` | Citizen satisfaction ratings & resolution feedback | Planned Phase 4 |
 
 ## Default Test User Credentials
 
@@ -42,3 +57,4 @@ docker-compose up -d
 | **DEPARTMENT_USER** | `officer_sharma` | `dept_roads@civiceye.com` | `Password@123` |
 
 All passwords in the seed script are encrypted using **BCrypt** with 10 salt rounds.
+
