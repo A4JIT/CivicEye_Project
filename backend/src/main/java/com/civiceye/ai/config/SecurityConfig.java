@@ -69,6 +69,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/error").permitAll()
+                        .requestMatchers("/api/dashboard/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/dashboard/department/**").hasAnyRole("DEPARTMENT_USER", "ADMIN")
+                        .requestMatchers("/api/dashboard/citizen/**").hasAnyRole("CITIZEN", "ADMIN")
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
