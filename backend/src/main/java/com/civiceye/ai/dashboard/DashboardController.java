@@ -48,6 +48,7 @@ public class DashboardController {
     @GetMapping("/department")
     @PreAuthorize("hasAnyRole('DEPARTMENT_USER', 'ADMIN')")
     public ResponseEntity<ApiResponse<DepartmentDashboardResponse>> getDepartmentDashboard(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
             @RequestParam(defaultValue = "1") Long departmentId) {
         DepartmentDashboardResponse response = dashboardService.getDepartmentDashboard(departmentId);
         return ResponseEntity.ok(ApiResponse.success("Department dashboard metrics retrieved", response));
