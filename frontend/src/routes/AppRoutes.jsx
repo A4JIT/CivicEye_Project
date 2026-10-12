@@ -5,20 +5,22 @@ import Register from '../pages/public/Register'
 import NotFound from '../pages/public/NotFound'
 import ProtectedRoute from '../components/common/ProtectedRoute'
 import { useAuth } from '../context/AuthContext'
+import CitizenDashboard from '../pages/citizen/CitizenDashboard'
+import AdminDashboard from '../pages/admin/AdminDashboard'
+import DepartmentDashboard from '../pages/department/DepartmentDashboard'
 
-const DashboardPlaceholder = () => {
+/**
+ * Dispatches to the appropriate dashboard component based on authenticated user role
+ */
+const RoleBasedDashboard = () => {
   const { user } = useAuth()
-  return (
-    <div style={{ padding: '4rem 2rem', textAlign: 'center' }}>
-      <h1>{user?.role?.replace('_', ' ')} Dashboard</h1>
-      <p style={{ marginTop: '1rem', color: 'var(--text-muted)' }}>
-        Welcome back, <strong>{user?.fullName || user?.username}</strong> ({user?.email})!
-      </p>
-      <p style={{ marginTop: '0.5rem', color: 'var(--text-dim)' }}>
-        Phase 1 Authentication successfully verified.
-      </p>
-    </div>
-  )
+  if (user?.role === 'ADMIN') {
+    return <AdminDashboard />
+  }
+  if (user?.role === 'DEPARTMENT_USER') {
+    return <DepartmentDashboard />
+  }
+  return <CitizenDashboard />
 }
 
 const AppRoutes = () => {
@@ -27,14 +29,43 @@ const AppRoutes = () => {
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      
+      {/* Dynamic Role-Based Dashboard Route */}
       <Route
         path="/dashboard"
         element={
           <ProtectedRoute>
-            <DashboardPlaceholder />
+            <RoleBasedDashboard />
           </ProtectedRoute>
         }
       />
+
+      {/* Explicit Role-Restricted Dashboard Routes */}
+      <Route
+        path="/dashboard/citizen"
+        element={
+          <ProtectedRoute allowedRoles={['CITIZEN', 'ADMIN']}>
+            <CitizenDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard/admin"
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN']}>
+            <AdminDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard/department"
+        element={
+          <ProtectedRoute allowedRoles={['DEPARTMENT_USER', 'ADMIN']}>
+            <DepartmentDashboard />
+          </ProtectedRoute>
+        }
+      />
+
       <Route path="*" element={<NotFound />} />
     </Routes>
   )
