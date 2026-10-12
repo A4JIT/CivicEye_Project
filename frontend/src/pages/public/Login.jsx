@@ -143,21 +143,21 @@ const Login = () => {
             <button
               type="button"
               className="demo-btn"
-              onClick={() => handleFillDemo('citizen@civiceye.local', 'Password@123')}
+              onClick={() => handleFillDemo('citizen@civiceye.com', 'Password@123')}
             >
               Citizen Demo
             </button>
             <button
               type="button"
               className="demo-btn"
-              onClick={() => handleFillDemo('admin@civiceye.local', 'Password@123')}
+              onClick={() => handleFillDemo('admin@civiceye.com', 'Password@123')}
             >
               Admin Demo
             </button>
             <button
               type="button"
               className="demo-btn"
-              onClick={() => handleFillDemo('officer@civiceye.local', 'Password@123')}
+              onClick={() => handleFillDemo('dept_roads@civiceye.com', 'Password@123')}
             >
               Department Demo
             </button>

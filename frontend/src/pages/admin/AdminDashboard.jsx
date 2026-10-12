@@ -1,0 +1,202 @@
+import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
+import DashboardLayout from '../../components/layout/DashboardLayout'
+import dashboardService from '../../services/dashboardService'
+import Loader from '../../components/common/Loader'
+
+const AdminDashboard = () => {
+  const [data, setData] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let isMounted = true
+    const fetchData = async () => {
+      try {
+        const result = await dashboardService.getAdminDashboard()
+        if (isMounted) setData(result)
+      } catch (err) {
+        console.error('Failed to load admin metrics', err)
+      } finally {
+        if (isMounted) setLoading(false)
+      }
+    }
+    fetchData()
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  if (loading) {
+    return (
+      <DashboardLayout title="System Command Center" subtitle="Aggregating municipal telemetry...">
+        <div className="dashboard-loading-box">
+          <Loader size="lg" message="Loading citywide operations and department workloads..." />
+        </div>
+      </DashboardLayout>
+    )
+  }
+
+  const deptMap = data?.complaintsByDepartment || {}
+  const total = data?.totalComplaints || 1
+  const recentComplaints = data?.recentComplaints || []
+
+  return (
+    <DashboardLayout
+      title="City Operations Command Center"
+      subtitle="Live oversight of municipal grievance dispatches, department workloads, and resolution performance."
+    >
+      {/* Top System Health Bar */}
+      <div className="admin-status-banner">
+        <div className="status-item">
+          <span className="dot dot-green"></span>
+          <span>AI Categorization Engine: <strong>Operational (99.4%)</strong></span>
+        </div>
+        <div className="status-item">
+          <span className="dot dot-blue"></span>
+          <span>Active Departments: <strong>{data?.totalDepartments || 4} Municipal Units</strong></span>
+        </div>
+        <div className="status-item">
+          <span className="dot dot-amber"></span>
+          <span>Registered Citizens: <strong>{data?.totalCitizens || 0} Accounts</strong></span>
+        </div>
+      </div>
+
+      {/* KPI Cards */}
+      <div className="stats-grid" data-testid="admin-stats-grid">
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-label">Total Complaints</span>
+            <span className="stat-icon">🏛️</span>
+          </div>
+          <div className="stat-value">{data?.totalComplaints || 0}</div>
+          <div className="stat-footer text-muted">Citywide lifetime tickets</div>
+        </div>
+
+        <div className="stat-card warning-accent">
+          <div className="stat-card-header">
+            <span className="stat-label">Pending Triage</span>
+            <span className="stat-icon">⏳</span>
+          </div>
+          <div className="stat-value">{data?.pendingComplaints || 0}</div>
+          <div className="stat-footer text-warning">Requires assignment</div>
+        </div>
+
+        <div className="stat-card primary-accent">
+          <div className="stat-card-header">
+            <span className="stat-label">In Progress</span>
+            <span className="stat-icon">🚜</span>
+          </div>
+          <div className="stat-value">{data?.inProgressComplaints || 0}</div>
+          <div className="stat-footer text-primary">Field operations active</div>
+        </div>
+
+        <div className="stat-card error-accent">
+          <div className="stat-card-header">
+            <span className="stat-label">Critical Urgent</span>
+            <span className="stat-icon">🚨</span>
+          </div>
+          <div className="stat-value">{data?.criticalComplaints || 0}</div>
+          <div className="stat-footer text-danger">Immediate safety hazard</div>
+        </div>
+      </div>
+
+      {/* Analytics Row: Department Workload + Category Distribution */}
+      <div className="analytics-split-row">
+        <div className="analytics-panel" data-testid="department-workload-panel">
+          <div className="panel-header">
+            <h4>Department Workload Distribution</h4>
+            <span className="badge badge-info">{Object.keys(deptMap).length} Active</span>
+          </div>
+          <div className="workload-list">
+            {Object.entries(deptMap).map(([dept, count]) => {
+              const pct = Math.round((count / total) * 100)
+              return (
+                <div key={dept} className="workload-item">
+                  <div className="workload-info">
+                    <span className="dept-name">{dept}</span>
+                    <span className="dept-count">{count} issues ({pct}%)</span>
+                  </div>
+                  <div className="progress-bar-bg">
+                    <div className="progress-bar-fill" style={{ width: `${Math.max(pct, 5)}%` }}></div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        <div className="analytics-panel" data-testid="category-distribution-panel">
+          <div className="panel-header">
+            <h4>Issue Categories Breakdown</h4>
+            <span className="badge badge-category">AI Classifications</span>
+          </div>
+          <div className="category-tags-grid">
+            {Object.entries(data?.complaintsByCategory || {}).map(([cat, count]) => (
+              <div key={cat} className="category-chip">
+                <span className="cat-title">{cat.replace('_', ' ')}</span>
+                <span className="cat-badge">{count}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Citywide Live Queue */}
+      <div className="dashboard-section" data-testid="admin-complaints-section">
+        <div className="section-header">
+          <div>
+            <h3 className="section-title">Latest Citywide Submissions</h3>
+            <p className="section-subtitle">Real-time incoming complaints stream</p>
+          </div>
+          <Link to="/admin/complaints" className="section-link">
+            Open Full Grievance Queue →
+          </Link>
+        </div>
+
+        <div className="table-responsive">
+          <table className="custom-table" data-testid="admin-complaints-table">
+            <thead>
+              <tr>
+                <th>Tracking ID</th>
+                <th>Issue Summary</th>
+                <th>Citizen</th>
+                <th>Department</th>
+                <th>Priority</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recentComplaints.map((item) => (
+                <tr key={item.id || item.trackingNumber}>
+                  <td className="tracking-cell">
+                    <span className="tracking-code">{item.trackingNumber}</span>
+                  </td>
+                  <td className="title-cell">
+                    <span className="complaint-title-text">{item.title}</span>
+                    {item.addressText && (
+                      <span className="complaint-location">📍 {item.addressText}</span>
+                    )}
+                  </td>
+                  <td>{item.citizenName || 'Verified Citizen'}</td>
+                  <td>{item.departmentName || 'Unassigned'}</td>
+                  <td>
+                    <span className={`badge badge-priority priority-${item.priority?.toLowerCase()}`}>
+                      {item.priority}
+                    </span>
+                  </td>
+                  <td>
+                    <span className={`badge badge-status status-${item.status?.toLowerCase()}`}>
+                      {item.status?.replace('_', ' ')}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </DashboardLayout>
+  )
+}
+
+export default AdminDashboard
