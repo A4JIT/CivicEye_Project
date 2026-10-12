@@ -44,7 +44,7 @@ describe('Login Component', () => {
     const usernameInput = screen.getByLabelText(/email or username/i)
     const passwordInput = screen.getByLabelText(/^password/i, { selector: 'input' })
 
-    expect(usernameInput.value).toBe('citizen@civiceye.local')
+    expect(usernameInput.value).toBe('citizen@civiceye.com')
     expect(passwordInput.value).toBe('Password@123')
   })
 
