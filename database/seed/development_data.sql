@@ -71,11 +71,17 @@ VALUES
     ('Public Health & Vector Control', 'HEALTH', 'Responsible for open stagnant water and disease vector hotspots', 'health@civiceye.gov.in', TRUE)
 ON CONFLICT (code) DO NOTHING;
 
+-- Link department officers to designated municipal departments
+UPDATE users
+SET department_id = (SELECT id FROM departments WHERE code = 'ROAD_WORKS')
+WHERE email = 'dept_roads@civiceye.com';
+
 -- 3. Insert Sample Complaints across Various Statuses
 INSERT INTO complaints (
     complaint_number, title, description, category, status, priority,
     location, latitude, longitude, citizen_id, department_id, assigned_to_id,
-    rejection_reason, resolution_notes, created_at, updated_at
+    rejection_reason, resolution_notes, resolution_image_url, progress_notes,
+    started_working_at, resolved_at, created_at, updated_at
 )
 VALUES
     (
@@ -89,6 +95,10 @@ VALUES
         28.6139,
         77.2090,
         (SELECT id FROM users WHERE email = 'citizen@civiceye.com'),
+        NULL,
+        NULL,
+        NULL,
+        NULL,
         NULL,
         NULL,
         NULL,
@@ -111,6 +121,10 @@ VALUES
         NULL,
         NULL,
         NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
         CURRENT_TIMESTAMP - INTERVAL '4 days',
         CURRENT_TIMESTAMP - INTERVAL '1 day'
     ),
@@ -128,6 +142,10 @@ VALUES
         (SELECT id FROM departments WHERE code = 'ROAD_WORKS'),
         (SELECT id FROM users WHERE email = 'dept_roads@civiceye.com'),
         NULL,
+        NULL,
+        NULL,
+        'Asphalt leveling completed. Roller compaction and cold mix seal coat in progress.',
+        CURRENT_TIMESTAMP - INTERVAL '1 day',
         NULL,
         CURRENT_TIMESTAMP - INTERVAL '5 days',
         CURRENT_TIMESTAMP - INTERVAL '6 hours'
@@ -147,6 +165,10 @@ VALUES
         NULL,
         NULL,
         'Sanitation compactor truck cleared the container and disinfected the area.',
+        '/uploads/resolutions/res_waste_0004.jpg',
+        'Compactor vehicle dispatched to site.',
+        CURRENT_TIMESTAMP - INTERVAL '2 days',
+        CURRENT_TIMESTAMP - INTERVAL '12 hours',
         CURRENT_TIMESTAMP - INTERVAL '7 days',
         CURRENT_TIMESTAMP - INTERVAL '12 hours'
     ),
@@ -165,6 +187,10 @@ VALUES
         (SELECT id FROM users WHERE email = 'admin@civiceye.com'),
         'Private civil dispute outside municipal civic authority jurisdiction.',
         NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
         CURRENT_TIMESTAMP - INTERVAL '8 days',
         CURRENT_TIMESTAMP - INTERVAL '3 days'
     ),
@@ -182,6 +208,10 @@ VALUES
         (SELECT id FROM departments WHERE code = 'WATER_SUPPLY'),
         NULL,
         NULL,
+        NULL,
+        NULL,
+        'Main isolation valve shut. Pipeline excavation and replacement sleeve fitting underway.',
+        CURRENT_TIMESTAMP - INTERVAL '8 hours',
         NULL,
         CURRENT_TIMESTAMP - INTERVAL '1 day',
         CURRENT_TIMESTAMP - INTERVAL '2 hours'

@@ -34,6 +34,8 @@ public class ComplaintResponse {
     private String needsInfoRemarks;
     private Boolean aiCategoryOverridden;
     private Boolean aiPriorityOverridden;
+    private LocalDateTime startedWorkingAt;
+    private String progressNotes;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime resolvedAt;
@@ -75,6 +77,8 @@ public class ComplaintResponse {
         res.setNeedsInfoRemarks(complaint.getNeedsInfoRemarks());
         res.setAiCategoryOverridden(complaint.getAiCategoryOverridden() != null ? complaint.getAiCategoryOverridden() : false);
         res.setAiPriorityOverridden(complaint.getAiPriorityOverridden() != null ? complaint.getAiPriorityOverridden() : false);
+        res.setStartedWorkingAt(complaint.getStartedWorkingAt());
+        res.setProgressNotes(complaint.getProgressNotes());
         res.setCreatedAt(complaint.getCreatedAt());
         res.setUpdatedAt(complaint.getUpdatedAt());
         res.setResolvedAt(complaint.getResolvedAt());
@@ -131,6 +135,10 @@ public class ComplaintResponse {
     public void setAiCategoryOverridden(Boolean aiCategoryOverridden) { this.aiCategoryOverridden = aiCategoryOverridden; }
     public Boolean getAiPriorityOverridden() { return aiPriorityOverridden; }
     public void setAiPriorityOverridden(Boolean aiPriorityOverridden) { this.aiPriorityOverridden = aiPriorityOverridden; }
+    public LocalDateTime getStartedWorkingAt() { return startedWorkingAt; }
+    public void setStartedWorkingAt(LocalDateTime startedWorkingAt) { this.startedWorkingAt = startedWorkingAt; }
+    public String getProgressNotes() { return progressNotes; }
+    public void setProgressNotes(String progressNotes) { this.progressNotes = progressNotes; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
@@ -168,6 +176,8 @@ public class ComplaintResponse {
         private String needsInfoRemarks;
         private Boolean aiCategoryOverridden = false;
         private Boolean aiPriorityOverridden = false;
+        private LocalDateTime startedWorkingAt;
+        private String progressNotes;
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
         private LocalDateTime resolvedAt;
@@ -197,6 +207,8 @@ public class ComplaintResponse {
         public ComplaintResponseBuilder needsInfoRemarks(String needsInfoRemarks) { this.needsInfoRemarks = needsInfoRemarks; return this; }
         public ComplaintResponseBuilder aiCategoryOverridden(Boolean aiCategoryOverridden) { this.aiCategoryOverridden = aiCategoryOverridden; return this; }
         public ComplaintResponseBuilder aiPriorityOverridden(Boolean aiPriorityOverridden) { this.aiPriorityOverridden = aiPriorityOverridden; return this; }
+        public ComplaintResponseBuilder startedWorkingAt(LocalDateTime startedWorkingAt) { this.startedWorkingAt = startedWorkingAt; return this; }
+        public ComplaintResponseBuilder progressNotes(String progressNotes) { this.progressNotes = progressNotes; return this; }
         public ComplaintResponseBuilder createdAt(LocalDateTime createdAt) { this.createdAt = createdAt; return this; }
         public ComplaintResponseBuilder updatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; return this; }
         public ComplaintResponseBuilder resolvedAt(LocalDateTime resolvedAt) { this.resolvedAt = resolvedAt; return this; }
@@ -228,6 +240,8 @@ public class ComplaintResponse {
             res.setNeedsInfoRemarks(this.needsInfoRemarks);
             res.setAiCategoryOverridden(this.aiCategoryOverridden != null ? this.aiCategoryOverridden : false);
             res.setAiPriorityOverridden(this.aiPriorityOverridden != null ? this.aiPriorityOverridden : false);
+            res.setStartedWorkingAt(this.startedWorkingAt);
+            res.setProgressNotes(this.progressNotes);
             res.setCreatedAt(this.createdAt);
             res.setUpdatedAt(this.updatedAt);
             res.setResolvedAt(this.resolvedAt);
