@@ -28,6 +28,12 @@ const Navbar = () => {
         <Link to="/" className={location.pathname === '/' ? 'active' : ''}>
           Home
         </Link>
+        <Link
+          to="/complaints/track"
+          className={location.pathname.startsWith('/complaints/track') ? 'active' : ''}
+        >
+          🔍 Track Issue
+        </Link>
         {isAuthenticated && (
           <>
             <Link
