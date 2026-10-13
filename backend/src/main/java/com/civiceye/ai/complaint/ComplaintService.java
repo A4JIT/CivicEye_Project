@@ -24,13 +24,23 @@ public class ComplaintService {
     private final ComplaintRepository complaintRepository;
     private final UserRepository userRepository;
     private final FileStorageService fileStorageService;
+    private final ComplaintStatusHistoryRepository statusHistoryRepository;
 
     public ComplaintService(ComplaintRepository complaintRepository,
                             UserRepository userRepository,
                             FileStorageService fileStorageService) {
+        this(complaintRepository, userRepository, fileStorageService, null);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public ComplaintService(ComplaintRepository complaintRepository,
+                            UserRepository userRepository,
+                            FileStorageService fileStorageService,
+                            ComplaintStatusHistoryRepository statusHistoryRepository) {
         this.complaintRepository = complaintRepository;
         this.userRepository = userRepository;
         this.fileStorageService = fileStorageService;
+        this.statusHistoryRepository = statusHistoryRepository;
     }
 
     @Transactional
@@ -61,6 +71,19 @@ public class ComplaintService {
                 .build();
 
         Complaint savedComplaint = complaintRepository.save(complaint);
+
+        if (statusHistoryRepository != null) {
+            ComplaintStatusHistory initialHistory = ComplaintStatusHistory.builder()
+                    .complaint(savedComplaint)
+                    .fromStatus(null)
+                    .toStatus(ComplaintStatus.SUBMITTED)
+                    .changedBy(citizen)
+                    .remarks("Complaint registered by citizen.")
+                    .createdAt(java.time.LocalDateTime.now())
+                    .build();
+            statusHistoryRepository.save(initialHistory);
+        }
+
         return ComplaintResponse.fromEntity(savedComplaint);
     }
 

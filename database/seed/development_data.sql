@@ -187,3 +187,48 @@ VALUES
         CURRENT_TIMESTAMP - INTERVAL '2 hours'
     )
 ON CONFLICT (complaint_number) DO NOTHING;
+
+-- 4. Insert Sample Status History
+INSERT INTO complaint_status_history (complaint_id, from_status, to_status, changed_by_id, remarks, created_at)
+VALUES
+    (
+        (SELECT id FROM complaints WHERE complaint_number = 'CE-2026-0001'),
+        NULL,
+        'SUBMITTED',
+        (SELECT id FROM users WHERE email = 'citizen@civiceye.com'),
+        'Initial complaint registered via Citizen Portal.',
+        CURRENT_TIMESTAMP - INTERVAL '3 days'
+    ),
+    (
+        (SELECT id FROM complaints WHERE complaint_number = 'CE-2026-0001'),
+        'SUBMITTED',
+        'ASSIGNED',
+        (SELECT id FROM users WHERE email = 'admin@civiceye.com'),
+        'Assigned to Roads & Traffic Department for inspection.',
+        CURRENT_TIMESTAMP - INTERVAL '2 days'
+    ),
+    (
+        (SELECT id FROM complaints WHERE complaint_number = 'CE-2026-0001'),
+        'ASSIGNED',
+        'IN_PROGRESS',
+        (SELECT id FROM users WHERE email = 'dept_roads@civiceye.com'),
+        'PWD maintenance squad dispatched on site with asphalt mixer.',
+        CURRENT_TIMESTAMP - INTERVAL '1 day'
+    ),
+    (
+        (SELECT id FROM complaints WHERE complaint_number = 'CE-2026-0004'),
+        NULL,
+        'SUBMITTED',
+        (SELECT id FROM users WHERE email = 'citizen@civiceye.com'),
+        'Complaint registered.',
+        CURRENT_TIMESTAMP - INTERVAL '7 days'
+    ),
+    (
+        (SELECT id FROM complaints WHERE complaint_number = 'CE-2026-0004'),
+        'SUBMITTED',
+        'RESOLVED',
+        (SELECT id FROM users WHERE email = 'dept_roads@civiceye.com'),
+        'Streetlight ballast and sodium bulb replaced. Operational.',
+        CURRENT_TIMESTAMP - INTERVAL '12 hours'
+    );
+
