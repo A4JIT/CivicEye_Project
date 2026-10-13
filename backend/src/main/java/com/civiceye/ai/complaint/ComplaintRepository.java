@@ -37,4 +37,6 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
 
     @Query("SELECT COUNT(c) FROM Complaint c WHERE c.department.id = :deptId AND c.priority = 'CRITICAL' AND c.status NOT IN ('RESOLVED', 'CLOSED', 'REJECTED')")
     long countCriticalPendingByDepartment(@Param("deptId") Long deptId);
+
+    Optional<Complaint> findTopByComplaintNumberStartingWithOrderByIdDesc(String prefix);
 }

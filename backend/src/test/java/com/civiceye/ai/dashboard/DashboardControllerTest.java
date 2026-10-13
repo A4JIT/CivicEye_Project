@@ -40,6 +40,7 @@ class DashboardControllerTest {
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(dashboardController)
+                .setCustomArgumentResolvers(new org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver())
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
     }
@@ -48,13 +49,12 @@ class DashboardControllerTest {
     @DisplayName("GET /api/dashboard/citizen should return 200 OK with citizen dashboard metrics")
     void getCitizenDashboard_Returns200_WithCitizenData() throws Exception {
         CitizenDashboardResponse response = CitizenDashboardResponse.builder()
-                .citizenId(1L)
-                .citizenName("John Doe")
                 .totalComplaints(5L)
-                .pendingComplaints(2L)
-                .inProgressComplaints(1L)
-                .resolvedComplaints(2L)
-                .rejectedComplaints(0L)
+                .submittedCount(2L)
+                .underReviewCount(0L)
+                .inProgressCount(1L)
+                .resolvedCount(2L)
+                .rejectedCount(0L)
                 .recentComplaints(Collections.emptyList())
                 .build();
 
@@ -65,10 +65,9 @@ class DashboardControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Citizen dashboard metrics retrieved"))
-                .andExpect(jsonPath("$.data.citizenId").value(1))
-                .andExpect(jsonPath("$.data.citizenName").value("John Doe"))
                 .andExpect(jsonPath("$.data.totalComplaints").value(5))
-                .andExpect(jsonPath("$.data.resolvedComplaints").value(2));
+                .andExpect(jsonPath("$.data.resolvedCount").value(2))
+                .andExpect(jsonPath("$.data.inProgressCount").value(1));
     }
 
     @Test
@@ -82,14 +81,11 @@ class DashboardControllerTest {
 
         AdminDashboardResponse response = AdminDashboardResponse.builder()
                 .totalComplaints(15L)
-                .pendingComplaints(5L)
-                .inProgressComplaints(6L)
-                .resolvedComplaints(3L)
-                .rejectedComplaints(1L)
-                .totalCitizens(10L)
-                .totalDepartments(4L)
-                .criticalComplaints(2L)
-                .highComplaints(5L)
+                .pendingReviewCount(5L)
+                .inProgressCount(6L)
+                .resolvedCount(3L)
+                .rejectedCount(1L)
+                .resolutionRatePercentage(20.0)
                 .complaintsByDepartment(complaintsByDept)
                 .complaintsByCategory(complaintsByCat)
                 .recentComplaints(Collections.emptyList())
@@ -103,8 +99,8 @@ class DashboardControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Administrator dashboard metrics retrieved"))
                 .andExpect(jsonPath("$.data.totalComplaints").value(15))
-                .andExpect(jsonPath("$.data.totalCitizens").value(10))
-                .andExpect(jsonPath("$.data.criticalComplaints").value(2));
+                .andExpect(jsonPath("$.data.pendingReviewCount").value(5))
+                .andExpect(jsonPath("$.data.resolutionRatePercentage").value(20.0));
     }
 
     @Test
@@ -114,15 +110,12 @@ class DashboardControllerTest {
                 .departmentId(1L)
                 .departmentName("Roads & Traffic")
                 .departmentCode("ROADS")
-                .totalAssigned(8L)
-                .pendingComplaints(3L)
-                .inProgressComplaints(3L)
-                .resolvedComplaints(2L)
-                .criticalCount(1L)
-                .highCount(2L)
-                .mediumCount(3L)
-                .lowCount(2L)
-                .recentComplaints(Collections.emptyList())
+                .totalAssignedComplaints(8L)
+                .pendingActionCount(3L)
+                .inProgressCount(3L)
+                .resolvedCount(2L)
+                .criticalAlertsCount(1L)
+                .recentAssignedComplaints(Collections.emptyList())
                 .build();
 
         when(dashboardService.getDepartmentDashboard(1L)).thenReturn(response);
@@ -135,7 +128,7 @@ class DashboardControllerTest {
                 .andExpect(jsonPath("$.message").value("Department dashboard metrics retrieved"))
                 .andExpect(jsonPath("$.data.departmentId").value(1))
                 .andExpect(jsonPath("$.data.departmentName").value("Roads & Traffic"))
-                .andExpect(jsonPath("$.data.totalAssigned").value(8));
+                .andExpect(jsonPath("$.data.totalAssignedComplaints").value(8));
     }
 
     @Test
