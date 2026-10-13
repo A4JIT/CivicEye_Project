@@ -95,3 +95,47 @@ See [ComplaintController.java](file:///c:/Piyush%20Yadav/LinkCode/AI%20Innovatio
 See [FileStorageController.java](file:///c:/Piyush%20Yadav/LinkCode/AI%20Innovation%20Competition/CivicEye%20AI/backend/src/main/java/com/civiceye/ai/storage/FileStorageController.java)
 
 - `GET /api/files/{filename}` - Retrieve protected evidence photo with cache header and validated content-type.
+
+---
+
+## 4. Complaint Lifecycle, Assignment & Timeline APIs (Phase 4)
+See [ComplaintController.java](file:///c:/Piyush%20Yadav/LinkCode/AI%20Innovation%20Competition/CivicEye%20AI/backend/src/main/java/com/civiceye/ai/complaint/ComplaintController.java) and [ComplaintLifecycleService.java](file:///c:/Piyush%20Yadav/LinkCode/AI%20Innovation%20Competition/CivicEye%20AI/backend/src/main/java/com/civiceye/ai/complaint/ComplaintLifecycleService.java)
+
+### 4.1 Update Complaint Status
+- **Endpoint:** `PUT /api/complaints/{id}/status`
+- **Security:** Bearer JWT (`ROLE_DEPARTMENT_USER`, `ROLE_ADMIN`)
+- **Content-Type:** `application/json` or `multipart/form-data`
+- **Payload:**
+```json
+{
+  "status": "IN_PROGRESS",
+  "remarks": "Maintenance crew deployed on site",
+  "resolutionImageUrl": null
+}
+```
+- **Response:** `200 OK` with updated `ComplaintResponse`.
+
+### 4.2 Assign Complaint to Department / Officer
+- **Endpoint:** `PUT /api/complaints/{id}/assign`
+- **Security:** Bearer JWT (`ROLE_DEPARTMENT_USER`, `ROLE_ADMIN`)
+- **Content-Type:** `application/json`
+- **Payload:**
+```json
+{
+  "departmentId": 1,
+  "assignedOfficerId": 3,
+  "instructions": "Inspect road crack within 24 hours"
+}
+```
+- **Response:** `200 OK` with updated `ComplaintResponse` (status automatically set to `ASSIGNED`).
+
+### 4.3 Get Complaint Audit Timeline
+- **Endpoint:** `GET /api/complaints/{id}/timeline`
+- **Security:** Bearer JWT (`ROLE_CITIZEN`, `ROLE_DEPARTMENT_USER`, `ROLE_ADMIN`)
+- **Response:** `200 OK` with chronological list of status transitions, actor information, remarks, and timestamps.
+
+### 4.4 Get Department Assigned Complaints
+- **Endpoint:** `GET /api/complaints/department/{departmentId}`
+- **Security:** Bearer JWT (`ROLE_DEPARTMENT_USER`, `ROLE_ADMIN`)
+- **Response:** `200 OK` with list of complaints assigned to the department.
+

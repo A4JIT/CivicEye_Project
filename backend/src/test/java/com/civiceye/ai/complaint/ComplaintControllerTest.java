@@ -37,6 +37,9 @@ class ComplaintControllerTest {
     @Mock
     private ComplaintService complaintService;
 
+    @Mock
+    private ComplaintLifecycleService lifecycleService;
+
     @InjectMocks
     private ComplaintController complaintController;
 
@@ -162,5 +165,57 @@ class ComplaintControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.complaintNumber").value("CE-2026-0001"));
+    }
+
+    @Test
+    @DisplayName("PUT /api/complaints/{id}/status should return 200 with updated status")
+    void updateStatus_Returns200() throws Exception {
+        sampleResponse.setStatus(ComplaintStatus.IN_PROGRESS);
+        when(lifecycleService.updateStatus(eq(1L), any(), any(), any())).thenReturn(sampleResponse);
+
+        mockMvc.perform(put("/api/complaints/1/status")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\": \"IN_PROGRESS\", \"remarks\": \"Inspection started\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.status").value("IN_PROGRESS"));
+    }
+
+    @Test
+    @DisplayName("PUT /api/complaints/{id}/assign should return 200 with assignment confirmation")
+    void assignComplaint_Returns200() throws Exception {
+        sampleResponse.setStatus(ComplaintStatus.ASSIGNED);
+        sampleResponse.setDepartmentId(10L);
+        when(lifecycleService.assignComplaint(eq(1L), any(), any())).thenReturn(sampleResponse);
+
+        mockMvc.perform(put("/api/complaints/1/assign")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"departmentId\": 10, \"instructions\": \"Immediate inspection needed\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.status").value("ASSIGNED"));
+    }
+
+    @Test
+    @DisplayName("GET /api/complaints/{id}/timeline should return 200 with audit timeline")
+    void getTimeline_Returns200() throws Exception {
+        when(lifecycleService.getTimeline(eq(1L), any())).thenReturn(Collections.emptyList());
+
+        mockMvc.perform(get("/api/complaints/1/timeline")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+    }
+
+    @Test
+    @DisplayName("GET /api/complaints/department/{deptId} should return 200 with department complaints")
+    void getDepartmentComplaints_Returns200() throws Exception {
+        when(lifecycleService.getComplaintsByDepartment(eq(10L), any())).thenReturn(List.of(sampleResponse));
+
+        mockMvc.perform(get("/api/complaints/department/10")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[0].id").value(1));
     }
 }

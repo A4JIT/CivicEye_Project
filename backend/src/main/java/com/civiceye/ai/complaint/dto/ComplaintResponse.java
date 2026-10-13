@@ -25,6 +25,8 @@ public class ComplaintResponse {
     private String citizenEmail;
     private Long departmentId;
     private String departmentName;
+    private Long assignedToId;
+    private String assignedToName;
     private String rejectionReason;
     private String resolutionNotes;
     private String resolutionImageUrl;
@@ -57,6 +59,10 @@ public class ComplaintResponse {
         if (complaint.getDepartment() != null) {
             res.setDepartmentId(complaint.getDepartment().getId());
             res.setDepartmentName(complaint.getDepartment().getName());
+        }
+        if (complaint.getAssignedTo() != null) {
+            res.setAssignedToId(complaint.getAssignedTo().getId());
+            res.setAssignedToName(complaint.getAssignedTo().getFullName());
         }
         res.setRejectionReason(complaint.getRejectionReason());
         res.setResolutionNotes(complaint.getResolutionNotes());
@@ -99,6 +105,10 @@ public class ComplaintResponse {
     public void setDepartmentId(Long departmentId) { this.departmentId = departmentId; }
     public String getDepartmentName() { return departmentName; }
     public void setDepartmentName(String departmentName) { this.departmentName = departmentName; }
+    public Long getAssignedToId() { return assignedToId; }
+    public void setAssignedToId(Long assignedToId) { this.assignedToId = assignedToId; }
+    public String getAssignedToName() { return assignedToName; }
+    public void setAssignedToName(String assignedToName) { this.assignedToName = assignedToName; }
     public String getRejectionReason() { return rejectionReason; }
     public void setRejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; }
     public String getResolutionNotes() { return resolutionNotes; }

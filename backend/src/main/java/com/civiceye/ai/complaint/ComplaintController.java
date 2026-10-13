@@ -1,8 +1,11 @@
 package com.civiceye.ai.complaint;
 
 import com.civiceye.ai.common.ApiResponse;
+import com.civiceye.ai.complaint.dto.AssignComplaintRequest;
 import com.civiceye.ai.complaint.dto.ComplaintResponse;
 import com.civiceye.ai.complaint.dto.CreateComplaintRequest;
+import com.civiceye.ai.complaint.dto.StatusUpdateRequest;
+import com.civiceye.ai.complaint.dto.TimelineEventResponse;
 import com.civiceye.ai.security.UserPrincipal;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -20,9 +23,16 @@ import java.util.List;
 public class ComplaintController {
 
     private final ComplaintService complaintService;
+    private final ComplaintLifecycleService lifecycleService;
 
     public ComplaintController(ComplaintService complaintService) {
+        this(complaintService, null);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public ComplaintController(ComplaintService complaintService, ComplaintLifecycleService lifecycleService) {
         this.complaintService = complaintService;
+        this.lifecycleService = lifecycleService;
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -80,5 +90,54 @@ public class ComplaintController {
     public ResponseEntity<ApiResponse<List<ComplaintResponse>>> getAllComplaints() {
         List<ComplaintResponse> complaints = complaintService.getAllComplaints();
         return ResponseEntity.ok(ApiResponse.success("All complaints retrieved", complaints));
+    }
+
+    @PutMapping(value = "/{id}/status", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('DEPARTMENT_USER', 'ADMIN')")
+    public ResponseEntity<ApiResponse<ComplaintResponse>> updateStatusJson(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal currentUser,
+            @Valid @RequestBody StatusUpdateRequest request) {
+        ComplaintResponse response = lifecycleService.updateStatus(id, request, null, currentUser);
+        return ResponseEntity.ok(ApiResponse.success("Complaint status updated successfully", response));
+    }
+
+    @PutMapping(value = "/{id}/status", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyRole('DEPARTMENT_USER', 'ADMIN')")
+    public ResponseEntity<ApiResponse<ComplaintResponse>> updateStatusMultipart(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal currentUser,
+            @ModelAttribute @Valid StatusUpdateRequest request,
+            @RequestParam(value = "image", required = false) MultipartFile image) {
+        ComplaintResponse response = lifecycleService.updateStatus(id, request, image, currentUser);
+        return ResponseEntity.ok(ApiResponse.success("Complaint status updated successfully", response));
+    }
+
+    @PutMapping("/{id}/assign")
+    @PreAuthorize("hasAnyRole('DEPARTMENT_USER', 'ADMIN')")
+    public ResponseEntity<ApiResponse<ComplaintResponse>> assignComplaint(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal currentUser,
+            @Valid @RequestBody AssignComplaintRequest request) {
+        ComplaintResponse response = lifecycleService.assignComplaint(id, request, currentUser);
+        return ResponseEntity.ok(ApiResponse.success("Complaint assigned successfully", response));
+    }
+
+    @GetMapping("/{id}/timeline")
+    @PreAuthorize("hasAnyRole('CITIZEN', 'DEPARTMENT_USER', 'ADMIN')")
+    public ResponseEntity<ApiResponse<List<TimelineEventResponse>>> getTimeline(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal currentUser) {
+        List<TimelineEventResponse> timeline = lifecycleService.getTimeline(id, currentUser);
+        return ResponseEntity.ok(ApiResponse.success("Complaint timeline retrieved successfully", timeline));
+    }
+
+    @GetMapping("/department/{departmentId}")
+    @PreAuthorize("hasAnyRole('DEPARTMENT_USER', 'ADMIN')")
+    public ResponseEntity<ApiResponse<List<ComplaintResponse>>> getDepartmentComplaints(
+            @PathVariable Long departmentId,
+            @AuthenticationPrincipal UserPrincipal currentUser) {
+        List<ComplaintResponse> complaints = lifecycleService.getComplaintsByDepartment(departmentId, currentUser);
+        return ResponseEntity.ok(ApiResponse.success("Department complaints retrieved successfully", complaints));
     }
 }

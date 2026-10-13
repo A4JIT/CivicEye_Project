@@ -44,9 +44,9 @@ docker-compose up -d
 | `V1__create_users.sql` | Users table schema, roles constraint, indexes | Phase 1 (Complete) |
 | `V2__create_departments.sql` | Municipal departments table with code, contact, indexes | Phase 2 (Complete) |
 | `V3__create_complaints.sql` | Core complaint filing schema, geo-coordinates, status & priority constraints | Phase 2 (Complete) |
-| `V4__create_assignments.sql` | Officer assignment & workflow dispatch | Planned Phase 3 |
-| `V5__create_status_history.sql`| Complaint audit history & lifecycle transitions | Planned Phase 3 |
-| `V6__create_feedback.sql` | Citizen satisfaction ratings & resolution feedback | Planned Phase 4 |
+| `V4__create_assignments.sql` | Officer assignment & workflow dispatch | Phase 4 (Complete) |
+| `V5__create_status_history.sql`| Complaint audit history & lifecycle transitions | Phase 4 (Complete) |
+| `V6__create_feedback.sql` | Citizen satisfaction ratings & resolution feedback | Planned Phase 5 |
 
 ## Default Test User Credentials
 
