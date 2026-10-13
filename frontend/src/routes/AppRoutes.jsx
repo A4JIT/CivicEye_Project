@@ -9,6 +9,8 @@ import CitizenDashboard from '../pages/citizen/CitizenDashboard'
 import CreateComplaint from '../pages/citizen/CreateComplaint'
 import ComplaintTracking from '../pages/citizen/ComplaintTracking'
 import AdminDashboard from '../pages/admin/AdminDashboard'
+import AllComplaints from '../pages/admin/AllComplaints'
+import ReviewComplaint from '../pages/admin/ReviewComplaint'
 import DepartmentDashboard from '../pages/department/DepartmentDashboard'
 
 /**
@@ -56,6 +58,30 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute allowedRoles={['ADMIN']}>
             <AdminDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/complaints"
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN']}>
+            <AllComplaints />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/complaints/:id/review"
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN']}>
+            <ReviewComplaint />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/complaints/:id"
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN']}>
+            <ReviewComplaint />
           </ProtectedRoute>
         }
       />
