@@ -7,6 +7,7 @@ import ProtectedRoute from '../components/common/ProtectedRoute'
 import { useAuth } from '../context/AuthContext'
 import CitizenDashboard from '../pages/citizen/CitizenDashboard'
 import CreateComplaint from '../pages/citizen/CreateComplaint'
+import ComplaintTracking from '../pages/citizen/ComplaintTracking'
 import AdminDashboard from '../pages/admin/AdminDashboard'
 import DepartmentDashboard from '../pages/department/DepartmentDashboard'
 
@@ -84,6 +85,11 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+
+      {/* Complaint Lifecycle & Tracking Routes */}
+      <Route path="/complaints/track" element={<ComplaintTracking />} />
+      <Route path="/complaints/track/:complaintNumber" element={<ComplaintTracking />} />
+      <Route path="/complaints/:id" element={<ComplaintTracking />} />
 
       <Route path="*" element={<NotFound />} />
     </Routes>
