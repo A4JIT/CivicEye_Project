@@ -232,3 +232,14 @@ VALUES
         CURRENT_TIMESTAMP - INTERVAL '12 hours'
     );
 
+-- 5. Insert Sample Citizen Feedback for Resolved Complaints
+INSERT INTO complaint_feedback (complaint_id, citizen_id, rating, comments, created_at)
+VALUES
+    (
+        (SELECT id FROM complaints WHERE complaint_number = 'CE-2026-0004'),
+        (SELECT id FROM users WHERE email = 'citizen@civiceye.com'),
+        5,
+        'Prompt and efficient resolution! The waste container was cleared and sanitised within hours of reporting.',
+        CURRENT_TIMESTAMP - INTERVAL '6 hours'
+    )
+ON CONFLICT (complaint_id) DO NOTHING;
