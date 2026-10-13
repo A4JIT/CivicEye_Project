@@ -279,7 +279,8 @@ a:hover {
 }
 
 .form-input,
-.form-select {
+.form-select,
+.form-textarea {
   width: 100%;
   padding: 0.75rem 1rem;
   font-size: 0.95rem;
@@ -292,17 +293,33 @@ a:hover {
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast);
 }
 
+.form-textarea {
+  min-height: 120px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
 .form-input:focus,
-.form-select:focus {
+.form-select:focus,
+.form-textarea:focus {
   background-color: var(--bg-input-focus);
   border-color: var(--border-focus);
   box-shadow: 0 0 0 3px var(--primary-glow);
 }
 
 .form-input.has-error,
-.form-select.has-error {
-  border-color: var(--error);
-  box-shadow: 0 0 0 2px var(--error-bg);
+.form-select.has-error,
+.form-textarea.has-error,
+.input-error {
+  border-color: var(--error) !important;
+  box-shadow: 0 0 0 2px var(--error-bg) !important;
+}
+
+.form-helper-text {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 0.1rem;
+  margin-bottom: 0.4rem;
 }
 
 .form-error {
@@ -1463,6 +1480,9 @@ a:hover {
 }
 
 .form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
   background: var(--bg-card);
   backdrop-filter: blur(12px);
   border: 1px solid var(--border-color);

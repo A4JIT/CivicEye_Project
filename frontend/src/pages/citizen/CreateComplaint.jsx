@@ -406,6 +406,7 @@ const CreateComplaint = () => {
               </label>
               <span className="char-counter">{formData.title.length}/150</span>
             </div>
+            <p className="form-helper-text">Short 1-line headline summarizing the civic defect.</p>
             <input
               type="text"
               id="complaint-title"
@@ -425,9 +426,14 @@ const CreateComplaint = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="complaint-description" className="form-label">
-              Detailed Description <span className="required">*</span>
-            </label>
+            <div className="label-row">
+              <label htmlFor="complaint-description" className="form-label">
+                Detailed Description <span className="required">*</span>
+              </label>
+            </div>
+            <p className="form-helper-text">
+              Comprehensive paragraph detailing when it started, hazards, obstacles, and landmarks.
+            </p>
             <textarea
               id="complaint-description"
               name="description"
