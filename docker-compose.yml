@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: civiceye-db
+    restart: always
+    environment:
+      POSTGRES_DB: civiceye
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - civiceye_pgdata:/var/lib/postgresql/data
+      - ./database/migrations/V1__create_users.sql:/docker-entrypoint-initdb.d/01_v1.sql
+      - ./database/migrations/V2__create_departments.sql:/docker-entrypoint-initdb.d/02_v2.sql
+      - ./database/migrations/V3__create_complaints.sql:/docker-entrypoint-initdb.d/03_v3.sql
+      - ./database/migrations/V4__create_assignments.sql:/docker-entrypoint-initdb.d/04_v4.sql
+      - ./database/migrations/V5__create_status_history.sql:/docker-entrypoint-initdb.d/05_v5.sql
+      - ./database/migrations/V6__create_feedback.sql:/docker-entrypoint-initdb.d/06_v6.sql
+      - ./database/seed/development_data.sql:/docker-entrypoint-initdb.d/07_seed.sql
+
+volumes:
+  civiceye_pgdata:
