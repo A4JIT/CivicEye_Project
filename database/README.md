@@ -48,6 +48,7 @@ docker-compose up -d
 | `V5__create_status_history.sql`| Complaint audit history & lifecycle transitions | Phase 4 (Complete) |
 | `V6__create_feedback.sql` | Citizen satisfaction ratings & resolution feedback | Phase 4 (Complete) |
 | `V7__create_admin_triage_audit.sql` | Admin triage notes, needs-info, AI overrides & queue indexes | Phase 5 (Complete) |
+| `V8__create_department_resolution_schema.sql` | Department resolution workflow, progress notes & performance indexes | Phase 6 (Complete) |
 
 ## Default Test User Credentials
 

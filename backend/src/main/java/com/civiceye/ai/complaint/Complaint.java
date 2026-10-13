@@ -88,6 +88,12 @@ public class Complaint {
     @Builder.Default
     private Boolean aiPriorityOverridden = false;
 
+    @Column(name = "started_working_at")
+    private LocalDateTime startedWorkingAt;
+
+    @Column(name = "progress_notes", columnDefinition = "TEXT")
+    private String progressNotes;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -139,6 +145,10 @@ public class Complaint {
     public void setAiCategoryOverridden(Boolean aiCategoryOverridden) { this.aiCategoryOverridden = aiCategoryOverridden; }
     public Boolean getAiPriorityOverridden() { return aiPriorityOverridden; }
     public void setAiPriorityOverridden(Boolean aiPriorityOverridden) { this.aiPriorityOverridden = aiPriorityOverridden; }
+    public LocalDateTime getStartedWorkingAt() { return startedWorkingAt; }
+    public void setStartedWorkingAt(LocalDateTime startedWorkingAt) { this.startedWorkingAt = startedWorkingAt; }
+    public String getProgressNotes() { return progressNotes; }
+    public void setProgressNotes(String progressNotes) { this.progressNotes = progressNotes; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
@@ -192,6 +202,8 @@ public class Complaint {
         private String needsInfoRemarks;
         private Boolean aiCategoryOverridden = false;
         private Boolean aiPriorityOverridden = false;
+        private LocalDateTime startedWorkingAt;
+        private String progressNotes;
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
         private LocalDateTime resolvedAt;
@@ -217,6 +229,8 @@ public class Complaint {
         public ComplaintBuilder needsInfoRemarks(String needsInfoRemarks) { this.needsInfoRemarks = needsInfoRemarks; return this; }
         public ComplaintBuilder aiCategoryOverridden(Boolean aiCategoryOverridden) { this.aiCategoryOverridden = aiCategoryOverridden; return this; }
         public ComplaintBuilder aiPriorityOverridden(Boolean aiPriorityOverridden) { this.aiPriorityOverridden = aiPriorityOverridden; return this; }
+        public ComplaintBuilder startedWorkingAt(LocalDateTime startedWorkingAt) { this.startedWorkingAt = startedWorkingAt; return this; }
+        public ComplaintBuilder progressNotes(String progressNotes) { this.progressNotes = progressNotes; return this; }
         public ComplaintBuilder createdAt(LocalDateTime createdAt) { this.createdAt = createdAt; return this; }
         public ComplaintBuilder updatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; return this; }
         public ComplaintBuilder resolvedAt(LocalDateTime resolvedAt) { this.resolvedAt = resolvedAt; return this; }
@@ -244,6 +258,8 @@ public class Complaint {
             c.setNeedsInfoRemarks(this.needsInfoRemarks);
             c.setAiCategoryOverridden(this.aiCategoryOverridden != null ? this.aiCategoryOverridden : false);
             c.setAiPriorityOverridden(this.aiPriorityOverridden != null ? this.aiPriorityOverridden : false);
+            c.setStartedWorkingAt(this.startedWorkingAt);
+            c.setProgressNotes(this.progressNotes);
             c.setCreatedAt(this.createdAt);
             c.setUpdatedAt(this.updatedAt);
             c.setResolvedAt(this.resolvedAt);

@@ -122,6 +122,12 @@ public class ComplaintLifecycleService {
         User user = userRepository.findById(currentUser.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + currentUser.getId()));
 
+        if (currentUser.getRole() == Role.DEPARTMENT_USER && user.getDepartment() != null) {
+            if (!user.getDepartment().getId().equals(complaint.getDepartment().getId())) {
+                throw new UnauthorizedException("Department officers can only update complaints within their own department");
+            }
+        }
+
         String finalResolutionImageUrl = request.getResolutionImageUrl();
         if (resolutionImage != null && !resolutionImage.isEmpty()) {
             String storedName = fileStorageService.storeFile(resolutionImage);
@@ -130,7 +136,14 @@ public class ComplaintLifecycleService {
 
         complaint.setStatus(newStatus);
 
-        if (newStatus == ComplaintStatus.RESOLVED) {
+        if (newStatus == ComplaintStatus.IN_PROGRESS) {
+            if (complaint.getStartedWorkingAt() == null) {
+                complaint.setStartedWorkingAt(LocalDateTime.now());
+            }
+            if (request.getRemarks() != null && !request.getRemarks().isBlank()) {
+                complaint.setProgressNotes(request.getRemarks().trim());
+            }
+        } else if (newStatus == ComplaintStatus.RESOLVED) {
             complaint.setResolvedAt(LocalDateTime.now());
             if (request.getRemarks() != null && !request.getRemarks().isBlank()) {
                 complaint.setResolutionNotes(request.getRemarks().trim());
