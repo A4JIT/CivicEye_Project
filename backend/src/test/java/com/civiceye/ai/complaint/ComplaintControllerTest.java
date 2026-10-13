@@ -40,6 +40,9 @@ class ComplaintControllerTest {
     @Mock
     private ComplaintLifecycleService lifecycleService;
 
+    @Mock
+    private AdminComplaintService adminComplaintService;
+
     @InjectMocks
     private ComplaintController complaintController;
 

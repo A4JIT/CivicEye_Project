@@ -30,6 +30,10 @@ public class ComplaintResponse {
     private String rejectionReason;
     private String resolutionNotes;
     private String resolutionImageUrl;
+    private String adminNotes;
+    private String needsInfoRemarks;
+    private Boolean aiCategoryOverridden;
+    private Boolean aiPriorityOverridden;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime resolvedAt;
@@ -67,6 +71,10 @@ public class ComplaintResponse {
         res.setRejectionReason(complaint.getRejectionReason());
         res.setResolutionNotes(complaint.getResolutionNotes());
         res.setResolutionImageUrl(complaint.getResolutionImageUrl());
+        res.setAdminNotes(complaint.getAdminNotes());
+        res.setNeedsInfoRemarks(complaint.getNeedsInfoRemarks());
+        res.setAiCategoryOverridden(complaint.getAiCategoryOverridden() != null ? complaint.getAiCategoryOverridden() : false);
+        res.setAiPriorityOverridden(complaint.getAiPriorityOverridden() != null ? complaint.getAiPriorityOverridden() : false);
         res.setCreatedAt(complaint.getCreatedAt());
         res.setUpdatedAt(complaint.getUpdatedAt());
         res.setResolvedAt(complaint.getResolvedAt());
@@ -115,6 +123,14 @@ public class ComplaintResponse {
     public void setResolutionNotes(String resolutionNotes) { this.resolutionNotes = resolutionNotes; }
     public String getResolutionImageUrl() { return resolutionImageUrl; }
     public void setResolutionImageUrl(String resolutionImageUrl) { this.resolutionImageUrl = resolutionImageUrl; }
+    public String getAdminNotes() { return adminNotes; }
+    public void setAdminNotes(String adminNotes) { this.adminNotes = adminNotes; }
+    public String getNeedsInfoRemarks() { return needsInfoRemarks; }
+    public void setNeedsInfoRemarks(String needsInfoRemarks) { this.needsInfoRemarks = needsInfoRemarks; }
+    public Boolean getAiCategoryOverridden() { return aiCategoryOverridden; }
+    public void setAiCategoryOverridden(Boolean aiCategoryOverridden) { this.aiCategoryOverridden = aiCategoryOverridden; }
+    public Boolean getAiPriorityOverridden() { return aiPriorityOverridden; }
+    public void setAiPriorityOverridden(Boolean aiPriorityOverridden) { this.aiPriorityOverridden = aiPriorityOverridden; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
@@ -143,9 +159,15 @@ public class ComplaintResponse {
         private String citizenEmail;
         private Long departmentId;
         private String departmentName;
+        private Long assignedToId;
+        private String assignedToName;
         private String rejectionReason;
         private String resolutionNotes;
         private String resolutionImageUrl;
+        private String adminNotes;
+        private String needsInfoRemarks;
+        private Boolean aiCategoryOverridden = false;
+        private Boolean aiPriorityOverridden = false;
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
         private LocalDateTime resolvedAt;
@@ -166,9 +188,15 @@ public class ComplaintResponse {
         public ComplaintResponseBuilder citizenEmail(String citizenEmail) { this.citizenEmail = citizenEmail; return this; }
         public ComplaintResponseBuilder departmentId(Long departmentId) { this.departmentId = departmentId; return this; }
         public ComplaintResponseBuilder departmentName(String departmentName) { this.departmentName = departmentName; return this; }
+        public ComplaintResponseBuilder assignedToId(Long assignedToId) { this.assignedToId = assignedToId; return this; }
+        public ComplaintResponseBuilder assignedToName(String assignedToName) { this.assignedToName = assignedToName; return this; }
         public ComplaintResponseBuilder rejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; return this; }
         public ComplaintResponseBuilder resolutionNotes(String resolutionNotes) { this.resolutionNotes = resolutionNotes; return this; }
         public ComplaintResponseBuilder resolutionImageUrl(String resolutionImageUrl) { this.resolutionImageUrl = resolutionImageUrl; return this; }
+        public ComplaintResponseBuilder adminNotes(String adminNotes) { this.adminNotes = adminNotes; return this; }
+        public ComplaintResponseBuilder needsInfoRemarks(String needsInfoRemarks) { this.needsInfoRemarks = needsInfoRemarks; return this; }
+        public ComplaintResponseBuilder aiCategoryOverridden(Boolean aiCategoryOverridden) { this.aiCategoryOverridden = aiCategoryOverridden; return this; }
+        public ComplaintResponseBuilder aiPriorityOverridden(Boolean aiPriorityOverridden) { this.aiPriorityOverridden = aiPriorityOverridden; return this; }
         public ComplaintResponseBuilder createdAt(LocalDateTime createdAt) { this.createdAt = createdAt; return this; }
         public ComplaintResponseBuilder updatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; return this; }
         public ComplaintResponseBuilder resolvedAt(LocalDateTime resolvedAt) { this.resolvedAt = resolvedAt; return this; }
@@ -191,9 +219,15 @@ public class ComplaintResponse {
             res.setCitizenEmail(this.citizenEmail);
             res.setDepartmentId(this.departmentId);
             res.setDepartmentName(this.departmentName);
+            res.setAssignedToId(this.assignedToId);
+            res.setAssignedToName(this.assignedToName);
             res.setRejectionReason(this.rejectionReason);
             res.setResolutionNotes(this.resolutionNotes);
             res.setResolutionImageUrl(this.resolutionImageUrl);
+            res.setAdminNotes(this.adminNotes);
+            res.setNeedsInfoRemarks(this.needsInfoRemarks);
+            res.setAiCategoryOverridden(this.aiCategoryOverridden != null ? this.aiCategoryOverridden : false);
+            res.setAiPriorityOverridden(this.aiPriorityOverridden != null ? this.aiPriorityOverridden : false);
             res.setCreatedAt(this.createdAt);
             res.setUpdatedAt(this.updatedAt);
             res.setResolvedAt(this.resolvedAt);

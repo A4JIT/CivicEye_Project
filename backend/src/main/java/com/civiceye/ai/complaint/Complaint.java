@@ -74,6 +74,20 @@ public class Complaint {
     @Column(name = "resolution_image_url", length = 500)
     private String resolutionImageUrl;
 
+    @Column(name = "admin_notes", columnDefinition = "TEXT")
+    private String adminNotes;
+
+    @Column(name = "needs_info_remarks", columnDefinition = "TEXT")
+    private String needsInfoRemarks;
+
+    @Column(name = "ai_category_overridden")
+    @Builder.Default
+    private Boolean aiCategoryOverridden = false;
+
+    @Column(name = "ai_priority_overridden")
+    @Builder.Default
+    private Boolean aiPriorityOverridden = false;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -117,6 +131,14 @@ public class Complaint {
     public void setResolutionNotes(String resolutionNotes) { this.resolutionNotes = resolutionNotes; }
     public String getResolutionImageUrl() { return resolutionImageUrl; }
     public void setResolutionImageUrl(String resolutionImageUrl) { this.resolutionImageUrl = resolutionImageUrl; }
+    public String getAdminNotes() { return adminNotes; }
+    public void setAdminNotes(String adminNotes) { this.adminNotes = adminNotes; }
+    public String getNeedsInfoRemarks() { return needsInfoRemarks; }
+    public void setNeedsInfoRemarks(String needsInfoRemarks) { this.needsInfoRemarks = needsInfoRemarks; }
+    public Boolean getAiCategoryOverridden() { return aiCategoryOverridden; }
+    public void setAiCategoryOverridden(Boolean aiCategoryOverridden) { this.aiCategoryOverridden = aiCategoryOverridden; }
+    public Boolean getAiPriorityOverridden() { return aiPriorityOverridden; }
+    public void setAiPriorityOverridden(Boolean aiPriorityOverridden) { this.aiPriorityOverridden = aiPriorityOverridden; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
@@ -166,6 +188,10 @@ public class Complaint {
         private String rejectionReason;
         private String resolutionNotes;
         private String resolutionImageUrl;
+        private String adminNotes;
+        private String needsInfoRemarks;
+        private Boolean aiCategoryOverridden = false;
+        private Boolean aiPriorityOverridden = false;
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
         private LocalDateTime resolvedAt;
@@ -187,6 +213,10 @@ public class Complaint {
         public ComplaintBuilder rejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; return this; }
         public ComplaintBuilder resolutionNotes(String resolutionNotes) { this.resolutionNotes = resolutionNotes; return this; }
         public ComplaintBuilder resolutionImageUrl(String resolutionImageUrl) { this.resolutionImageUrl = resolutionImageUrl; return this; }
+        public ComplaintBuilder adminNotes(String adminNotes) { this.adminNotes = adminNotes; return this; }
+        public ComplaintBuilder needsInfoRemarks(String needsInfoRemarks) { this.needsInfoRemarks = needsInfoRemarks; return this; }
+        public ComplaintBuilder aiCategoryOverridden(Boolean aiCategoryOverridden) { this.aiCategoryOverridden = aiCategoryOverridden; return this; }
+        public ComplaintBuilder aiPriorityOverridden(Boolean aiPriorityOverridden) { this.aiPriorityOverridden = aiPriorityOverridden; return this; }
         public ComplaintBuilder createdAt(LocalDateTime createdAt) { this.createdAt = createdAt; return this; }
         public ComplaintBuilder updatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; return this; }
         public ComplaintBuilder resolvedAt(LocalDateTime resolvedAt) { this.resolvedAt = resolvedAt; return this; }
@@ -210,6 +240,10 @@ public class Complaint {
             c.setRejectionReason(this.rejectionReason);
             c.setResolutionNotes(this.resolutionNotes);
             c.setResolutionImageUrl(this.resolutionImageUrl);
+            c.setAdminNotes(this.adminNotes);
+            c.setNeedsInfoRemarks(this.needsInfoRemarks);
+            c.setAiCategoryOverridden(this.aiCategoryOverridden != null ? this.aiCategoryOverridden : false);
+            c.setAiPriorityOverridden(this.aiPriorityOverridden != null ? this.aiPriorityOverridden : false);
             c.setCreatedAt(this.createdAt);
             c.setUpdatedAt(this.updatedAt);
             c.setResolvedAt(this.resolvedAt);

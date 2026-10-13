@@ -27,7 +27,7 @@ INSERT INTO users (username, password, email, full_name, role, is_active, create
 VALUES
     (
         'admin',
-        '$2a$10$7EqJtq98hPqEX7fNZaFWoOhi5VpI0L/w7U2l.Z7Oq9uUkm0E1N2/m',
+        '$2a$10$fjOa1VNaCbtBa7pCNt0/CuWGC7WptW0Mnl0qDb5Y8Hw4A7g2Ierwm',
         'admin@civiceye.com',
         'CivicEye Administrator',
         'ADMIN',
@@ -37,7 +37,7 @@ VALUES
     ),
     (
         'citizen_jane',
-        '$2a$10$7EqJtq98hPqEX7fNZaFWoOhi5VpI0L/w7U2l.Z7Oq9uUkm0E1N2/m',
+        '$2a$10$fjOa1VNaCbtBa7pCNt0/CuWGC7WptW0Mnl0qDb5Y8Hw4A7g2Ierwm',
         'citizen@civiceye.com',
         'Jane Citizen',
         'CITIZEN',
@@ -47,7 +47,7 @@ VALUES
     ),
     (
         'officer_sharma',
-        '$2a$10$7EqJtq98hPqEX7fNZaFWoOhi5VpI0L/w7U2l.Z7Oq9uUkm0E1N2/m',
+        '$2a$10$fjOa1VNaCbtBa7pCNt0/CuWGC7WptW0Mnl0qDb5Y8Hw4A7g2Ierwm',
         'dept_roads@civiceye.com',
         'Rajesh Sharma (PWD Officer)',
         'DEPARTMENT_USER',

@@ -46,7 +46,8 @@ docker-compose up -d
 | `V3__create_complaints.sql` | Core complaint filing schema, geo-coordinates, status & priority constraints | Phase 2 (Complete) |
 | `V4__create_assignments.sql` | Officer assignment & workflow dispatch | Phase 4 (Complete) |
 | `V5__create_status_history.sql`| Complaint audit history & lifecycle transitions | Phase 4 (Complete) |
-| `V6__create_feedback.sql` | Citizen satisfaction ratings & resolution feedback | Complete |
+| `V6__create_feedback.sql` | Citizen satisfaction ratings & resolution feedback | Phase 4 (Complete) |
+| `V7__create_admin_triage_audit.sql` | Admin triage notes, needs-info, AI overrides & queue indexes | Phase 5 (Complete) |
 
 ## Default Test User Credentials
 
