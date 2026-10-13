@@ -29,12 +29,22 @@ const Navbar = () => {
           Home
         </Link>
         {isAuthenticated && (
-          <Link
-            to="/dashboard"
-            className={location.pathname === '/dashboard' ? 'active' : ''}
-          >
-            Dashboard
-          </Link>
+          <>
+            <Link
+              to="/dashboard"
+              className={location.pathname.startsWith('/dashboard') ? 'active' : ''}
+            >
+              Dashboard
+            </Link>
+            {(user?.role === 'CITIZEN' || user?.role === 'ADMIN') && (
+              <Link
+                to="/complaints/new"
+                className={location.pathname.startsWith('/complaints/new') ? 'active' : ''}
+              >
+                + Report Issue
+              </Link>
+            )}
+          </>
         )}
       </nav>
 

@@ -6,6 +6,7 @@ import NotFound from '../pages/public/NotFound'
 import ProtectedRoute from '../components/common/ProtectedRoute'
 import { useAuth } from '../context/AuthContext'
 import CitizenDashboard from '../pages/citizen/CitizenDashboard'
+import CreateComplaint from '../pages/citizen/CreateComplaint'
 import AdminDashboard from '../pages/admin/AdminDashboard'
 import DepartmentDashboard from '../pages/department/DepartmentDashboard'
 
@@ -62,6 +63,24 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute allowedRoles={['DEPARTMENT_USER', 'ADMIN']}>
             <DepartmentDashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Complaint Registration Routes */}
+      <Route
+        path="/complaints/new"
+        element={
+          <ProtectedRoute allowedRoles={['CITIZEN', 'ADMIN']}>
+            <CreateComplaint />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/complaints/create"
+        element={
+          <ProtectedRoute allowedRoles={['CITIZEN', 'ADMIN']}>
+            <CreateComplaint />
           </ProtectedRoute>
         }
       />
