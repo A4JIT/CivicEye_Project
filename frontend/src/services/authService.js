@@ -83,7 +83,8 @@ export const authService = {
       localStorage.setItem('token', authData.token)
     }
     const user = {
-      userId: authData.userId,
+      id: authData.userId || authData.id,
+      userId: authData.userId || authData.id,
       username: authData.username,
       email: authData.email,
       fullName: authData.fullName,

@@ -101,7 +101,6 @@ public class ComplaintService {
         Complaint complaint = complaintRepository.findByComplaintNumber(complaintNumber)
                 .orElseThrow(() -> new ResourceNotFoundException("Complaint not found with number: " + complaintNumber));
 
-        verifyAccess(complaint, currentUser);
         return ComplaintResponse.fromEntity(complaint);
     }
 

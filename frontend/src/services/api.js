@@ -32,7 +32,12 @@ api.interceptors.response.use(
   (error) => {
     if (error.response) {
       // 401 Unauthorized: token expired or invalid
-      if (error.response.status === 401) {
+      const token = localStorage.getItem('token')
+      const isDemoToken = token && token.startsWith('demo-')
+      const url = error.config?.url || ''
+      const isPublicEndpoint = url.includes('/complaints/number/') || url.includes('/timeline')
+
+      if (error.response.status === 401 && !isDemoToken && !isPublicEndpoint) {
         localStorage.removeItem('token')
         localStorage.removeItem('user')
         window.dispatchEvent(new Event('civiceye:auth:logout'))

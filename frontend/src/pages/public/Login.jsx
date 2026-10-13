@@ -62,7 +62,7 @@ const Login = () => {
         formData.usernameOrEmail.trim(),
         formData.password
       )
-      const redirectPath = location.state?.from?.pathname || '/'
+      const redirectPath = location.state?.from?.pathname || '/dashboard'
       navigate(redirectPath, { replace: true })
     } catch (err) {
       setSubmitError(err.message || 'Login failed. Please check your credentials.')

@@ -60,6 +60,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                .cors(org.springframework.security.config.Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(unauthorizedHandler)
@@ -68,7 +69,9 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/complaints/number/**", "/api/complaints/*/timeline").permitAll()
                         .requestMatchers("/error").permitAll()
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/dashboard/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/dashboard/department/**").hasAnyRole("DEPARTMENT_USER", "ADMIN")
                         .requestMatchers("/api/dashboard/citizen/**").hasAnyRole("CITIZEN", "ADMIN")

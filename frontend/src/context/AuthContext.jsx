@@ -37,7 +37,8 @@ export const AuthProvider = ({ children }) => {
       authService.setSession(authData)
       setToken(authData.token)
       setUser({
-        userId: authData.userId,
+        id: authData.userId || authData.id,
+        userId: authData.userId || authData.id,
         username: authData.username,
         email: authData.email,
         fullName: authData.fullName,
@@ -66,7 +67,8 @@ export const AuthProvider = ({ children }) => {
         authService.setSession(authData)
         setToken(authData.token)
         setUser({
-          userId: authData.userId,
+          id: authData.userId || authData.id,
+          userId: authData.userId || authData.id,
           username: authData.username,
           email: authData.email,
           fullName: authData.fullName,

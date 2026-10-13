@@ -111,25 +111,120 @@ export const complaintService = {
       return response.data
     } catch (error) {
       if (!error.response || error.code === 'ERR_NETWORK') {
-        return {
-          success: true,
-          data: {
+        const mockCatalog = {
+          'CE-2026-0001': {
             id: 1,
-            complaintNumber: complaintNumber,
-            title: 'Severe Deep Pothole on MG Road',
-            description: 'Hazardous deep pothole causing traffic slowdown and two-wheeler accidents.',
+            complaintNumber: 'CE-2026-0001',
+            title: 'Deep Pothole on MG Road near City Hospital',
+            description: 'Large hazardous pothole measuring approximately 2 feet in diameter causing vehicular traffic jams.',
+            category: 'ROADS_AND_FOOTPATHS',
+            status: 'SUBMITTED',
+            priority: 'HIGH',
+            location: 'MG Road, Block 4, Sector 12',
+            citizenName: 'Jane Citizen',
+            departmentName: 'Public Works & Roads',
+            assignedToName: null,
+            createdAt: new Date(Date.now() - 172800000).toISOString(),
+            updatedAt: new Date(Date.now() - 172800000).toISOString(),
+          },
+          'CE-2026-0002': {
+            id: 2,
+            complaintNumber: 'CE-2026-0002',
+            title: 'Broken Streetlights on Ring Road Flyover',
+            description: 'Continuous row of 5 solar streetlights not functioning since last Sunday, creating darkness at night.',
+            category: 'STREETLIGHTS_AND_ELECTRICITY',
+            status: 'ASSIGNED',
+            priority: 'MEDIUM',
+            location: 'Ring Road Flyover, Pillar 42',
+            citizenName: 'Jane Citizen',
+            departmentName: 'Electricity & Street Lighting',
+            assignedToName: null,
+            createdAt: new Date(Date.now() - 345600000).toISOString(),
+            updatedAt: new Date(Date.now() - 86400000).toISOString(),
+          },
+          'CE-2026-0003': {
+            id: 3,
+            complaintNumber: 'CE-2026-0003',
+            title: 'Road Repair Work on Nehru Marg',
+            description: 'Road asphalt peeled off after monsoon rains. PWD team has mobilized road patching crew.',
             category: 'ROADS_AND_FOOTPATHS',
             status: 'IN_PROGRESS',
             priority: 'HIGH',
-            location: 'Opposite City Hospital, MG Road',
-            latitude: 18.52043,
-            longitude: 73.85674,
+            location: 'Nehru Marg, Lane 2, South Ext.',
             citizenName: 'Jane Citizen',
-            departmentName: 'Roads & Traffic',
-            assignedToName: 'Rajesh Sharma (PWD)',
-            createdAt: new Date(Date.now() - 172800000).toISOString(),
-            updatedAt: new Date(Date.now() - 3600000).toISOString(),
+            departmentName: 'Public Works & Roads',
+            assignedToName: 'Rajesh Sharma (PWD Officer)',
+            createdAt: new Date(Date.now() - 432000000).toISOString(),
+            updatedAt: new Date(Date.now() - 21600000).toISOString(),
           },
+          'CE-2026-0004': {
+            id: 4,
+            complaintNumber: 'CE-2026-0004',
+            title: 'Overflowing Garbage Container at Market Square',
+            description: 'Commercial waste container overflowing into public footpath emitting foul odor.',
+            category: 'GARBAGE_AND_CLEANLINESS',
+            status: 'RESOLVED',
+            priority: 'MEDIUM',
+            location: 'Central Market Square, Gate 1',
+            citizenName: 'Jane Citizen',
+            departmentName: 'Sanitation & Waste Management',
+            assignedToName: 'Suresh Kumar',
+            resolutionNotes: 'Sanitation compactor truck cleared the container and disinfected the area.',
+            createdAt: new Date(Date.now() - 604800000).toISOString(),
+            updatedAt: new Date(Date.now() - 43200000).toISOString(),
+          },
+          'CE-2026-0005': {
+            id: 5,
+            complaintNumber: 'CE-2026-0005',
+            title: 'Private Property Boundary Wall Paint Dispute',
+            description: 'Neighbor painted exterior boundary wall without mutual residential agreement.',
+            category: 'OTHER',
+            status: 'REJECTED',
+            priority: 'LOW',
+            location: 'Flat 402, Green Avenue',
+            citizenName: 'Jane Citizen',
+            departmentName: null,
+            assignedToName: null,
+            rejectionReason: 'Civil boundary dispute between private property owners. Not within municipal jurisdiction.',
+            createdAt: new Date(Date.now() - 864000000).toISOString(),
+            updatedAt: new Date(Date.now() - 172800000).toISOString(),
+          },
+          'CE-2026-0006': {
+            id: 6,
+            complaintNumber: 'CE-2026-0006',
+            title: 'High Pressure Water Pipe Leakage near Metro Station',
+            description: 'Fresh municipal drinking water pipeline burst creating large puddle and water wastage on main road.',
+            category: 'WATER_AND_SEWAGE',
+            status: 'IN_PROGRESS',
+            priority: 'HIGH',
+            location: 'Station Road, Pillar 14',
+            citizenName: 'Jane Citizen',
+            departmentName: 'Water Supply & Sewerage',
+            assignedToName: 'Amit Verma (DJB)',
+            createdAt: new Date(Date.now() - 100000000).toISOString(),
+            updatedAt: new Date(Date.now() - 10000000).toISOString(),
+          },
+        }
+
+        const found = mockCatalog[complaintNumber] || {
+          id: Math.abs(complaintNumber.split('').reduce((a, c) => ((a << 5) - a) + c.charCodeAt(0), 0)) % 1000 + 10,
+          complaintNumber: complaintNumber,
+          title: `Civic Issue (${complaintNumber})`,
+          description: `Detailed report for tracking reference ${complaintNumber}.`,
+          category: 'ROADS_AND_FOOTPATHS',
+          status: 'IN_PROGRESS',
+          priority: 'MEDIUM',
+          location: 'Municipal Ward Area',
+          citizenName: 'Citizen',
+          departmentName: 'Public Works Department',
+          assignedToName: 'Duty Officer',
+          createdAt: new Date(Date.now() - 86400000).toISOString(),
+          updatedAt: new Date().toISOString(),
+        }
+
+        return {
+          success: true,
+          data: found,
         }
       }
       throw error
@@ -147,6 +242,77 @@ export const complaintService = {
       return response.data
     } catch (error) {
       if (!error.response || error.code === 'ERR_NETWORK') {
+        const idNum = Number(id)
+        if (idNum === 5) {
+          return {
+            success: true,
+            data: [
+              {
+                id: 1,
+                fromStatus: null,
+                toStatus: 'SUBMITTED',
+                changedByName: 'Jane Citizen',
+                changedByRole: 'CITIZEN',
+                remarks: 'Grievance submitted regarding property wall painting.',
+                createdAt: new Date(Date.now() - 864000000).toISOString(),
+              },
+              {
+                id: 2,
+                fromStatus: 'SUBMITTED',
+                toStatus: 'REJECTED',
+                changedByName: 'City Administrator',
+                changedByRole: 'ADMIN',
+                remarks: 'Civil dispute between private owners; outside civic jurisdiction.',
+                createdAt: new Date(Date.now() - 172800000).toISOString(),
+              },
+            ],
+          }
+        }
+
+        if (idNum === 4) {
+          return {
+            success: true,
+            data: [
+              {
+                id: 1,
+                fromStatus: null,
+                toStatus: 'SUBMITTED',
+                changedByName: 'Jane Citizen',
+                changedByRole: 'CITIZEN',
+                remarks: 'Complaint filed regarding overflowing garbage.',
+                createdAt: new Date(Date.now() - 604800000).toISOString(),
+              },
+              {
+                id: 2,
+                fromStatus: 'SUBMITTED',
+                toStatus: 'ASSIGNED',
+                changedByName: 'City Administrator',
+                changedByRole: 'ADMIN',
+                remarks: 'Assigned to Sanitation & Waste Management.',
+                createdAt: new Date(Date.now() - 300000000).toISOString(),
+              },
+              {
+                id: 3,
+                fromStatus: 'ASSIGNED',
+                toStatus: 'IN_PROGRESS',
+                changedByName: 'Suresh Kumar',
+                changedByRole: 'DEPARTMENT_USER',
+                remarks: 'Sanitation truck dispatched to clear bin.',
+                createdAt: new Date(Date.now() - 100000000).toISOString(),
+              },
+              {
+                id: 4,
+                fromStatus: 'IN_PROGRESS',
+                toStatus: 'RESOLVED',
+                changedByName: 'Suresh Kumar',
+                changedByRole: 'DEPARTMENT_USER',
+                remarks: 'Container cleared and disinfected.',
+                createdAt: new Date(Date.now() - 43200000).toISOString(),
+              },
+            ],
+          }
+        }
+
         return {
           success: true,
           data: [
@@ -165,16 +331,16 @@ export const complaintService = {
               toStatus: 'ASSIGNED',
               changedByName: 'City Administrator',
               changedByRole: 'ADMIN',
-              remarks: 'Assigned to Roads & Traffic Department for urgent field review.',
+              remarks: 'Assigned to Municipal Department for review.',
               createdAt: new Date(Date.now() - 86400000).toISOString(),
             },
             {
               id: 3,
               fromStatus: 'ASSIGNED',
               toStatus: 'IN_PROGRESS',
-              changedByName: 'Rajesh Sharma',
+              changedByName: 'Duty Officer',
               changedByRole: 'DEPARTMENT_USER',
-              remarks: 'Maintenance squad dispatched on site with hot-mix asphalt.',
+              remarks: 'Maintenance squad dispatched on site.',
               createdAt: new Date(Date.now() - 43200000).toISOString(),
             },
           ],

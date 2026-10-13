@@ -4,6 +4,7 @@ import com.civiceye.ai.common.ApiResponse;
 import com.civiceye.ai.complaint.dto.AssignComplaintRequest;
 import com.civiceye.ai.complaint.dto.ComplaintResponse;
 import com.civiceye.ai.complaint.dto.CreateComplaintRequest;
+import com.civiceye.ai.complaint.dto.ProvideInfoRequest;
 import com.civiceye.ai.complaint.dto.StatusUpdateRequest;
 import com.civiceye.ai.complaint.dto.TimelineEventResponse;
 import com.civiceye.ai.security.UserPrincipal;
@@ -24,15 +25,19 @@ public class ComplaintController {
 
     private final ComplaintService complaintService;
     private final ComplaintLifecycleService lifecycleService;
+    private final AdminComplaintService adminComplaintService;
 
     public ComplaintController(ComplaintService complaintService) {
-        this(complaintService, null);
+        this(complaintService, null, null);
     }
 
     @org.springframework.beans.factory.annotation.Autowired
-    public ComplaintController(ComplaintService complaintService, ComplaintLifecycleService lifecycleService) {
+    public ComplaintController(ComplaintService complaintService,
+                               ComplaintLifecycleService lifecycleService,
+                               AdminComplaintService adminComplaintService) {
         this.complaintService = complaintService;
         this.lifecycleService = lifecycleService;
+        this.adminComplaintService = adminComplaintService;
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -77,7 +82,6 @@ public class ComplaintController {
     }
 
     @GetMapping("/number/{complaintNumber}")
-    @PreAuthorize("hasAnyRole('CITIZEN', 'ADMIN', 'DEPARTMENT_USER')")
     public ResponseEntity<ApiResponse<ComplaintResponse>> getComplaintByNumber(
             @PathVariable String complaintNumber,
             @AuthenticationPrincipal UserPrincipal currentUser) {
@@ -124,7 +128,6 @@ public class ComplaintController {
     }
 
     @GetMapping("/{id}/timeline")
-    @PreAuthorize("hasAnyRole('CITIZEN', 'DEPARTMENT_USER', 'ADMIN')")
     public ResponseEntity<ApiResponse<List<TimelineEventResponse>>> getTimeline(
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal currentUser) {
@@ -139,5 +142,26 @@ public class ComplaintController {
             @AuthenticationPrincipal UserPrincipal currentUser) {
         List<ComplaintResponse> complaints = lifecycleService.getComplaintsByDepartment(departmentId, currentUser);
         return ResponseEntity.ok(ApiResponse.success("Department complaints retrieved successfully", complaints));
+    }
+
+    @PutMapping(value = "/{id}/provide-info", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyRole('CITIZEN', 'ADMIN')")
+    public ResponseEntity<ApiResponse<ComplaintResponse>> provideInfoMultipart(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal currentUser,
+            @ModelAttribute @Valid ProvideInfoRequest request,
+            @RequestParam(value = "image", required = false) MultipartFile image) {
+        ComplaintResponse response = adminComplaintService.provideInformation(id, request, image, currentUser);
+        return ResponseEntity.ok(ApiResponse.success("Additional information provided successfully", response));
+    }
+
+    @PutMapping(value = "/{id}/provide-info", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('CITIZEN', 'ADMIN')")
+    public ResponseEntity<ApiResponse<ComplaintResponse>> provideInfoJson(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal currentUser,
+            @Valid @RequestBody ProvideInfoRequest request) {
+        ComplaintResponse response = adminComplaintService.provideInformation(id, request, null, currentUser);
+        return ResponseEntity.ok(ApiResponse.success("Additional information provided successfully", response));
     }
 }
