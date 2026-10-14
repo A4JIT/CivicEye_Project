@@ -27,16 +27,24 @@ public class AdminComplaintController {
 
     private final AdminComplaintService adminComplaintService;
     private final AiRecommendationService aiRecommendationService;
+    private final ComplaintLifecycleService lifecycleService;
 
     public AdminComplaintController(AdminComplaintService adminComplaintService) {
-        this(adminComplaintService, null);
+        this(adminComplaintService, null, null);
+    }
+
+    public AdminComplaintController(AdminComplaintService adminComplaintService,
+                                    AiRecommendationService aiRecommendationService) {
+        this(adminComplaintService, aiRecommendationService, null);
     }
 
     @org.springframework.beans.factory.annotation.Autowired
     public AdminComplaintController(AdminComplaintService adminComplaintService,
-                                    AiRecommendationService aiRecommendationService) {
+                                    AiRecommendationService aiRecommendationService,
+                                    ComplaintLifecycleService lifecycleService) {
         this.adminComplaintService = adminComplaintService;
         this.aiRecommendationService = aiRecommendationService;
+        this.lifecycleService = lifecycleService;
     }
 
     @GetMapping
@@ -135,5 +143,29 @@ public class AdminComplaintController {
         ComplaintResponse response = aiRecommendationService.overrideRecommendation(id, request, adminUser);
         return ResponseEntity.ok(ApiResponse.success(
                 "AI recommendation overridden successfully by administrator", response));
+    }
+
+    @PostMapping("/{id}/close")
+    public ResponseEntity<ApiResponse<ComplaintResponse>> closeComplaintPost(
+            @PathVariable Long id,
+            @RequestBody(required = false) CloseComplaintRequest request,
+            @AuthenticationPrincipal UserPrincipal adminUser) {
+        ComplaintResponse response = lifecycleService != null
+                ? lifecycleService.closeComplaint(id, request != null ? request : new CloseComplaintRequest(), adminUser)
+                : null;
+        return ResponseEntity.ok(ApiResponse.success(
+                "Complaint closed successfully by administrator", response));
+    }
+
+    @PutMapping("/{id}/close")
+    public ResponseEntity<ApiResponse<ComplaintResponse>> closeComplaintPut(
+            @PathVariable Long id,
+            @RequestBody(required = false) CloseComplaintRequest request,
+            @AuthenticationPrincipal UserPrincipal adminUser) {
+        ComplaintResponse response = lifecycleService != null
+                ? lifecycleService.closeComplaint(id, request != null ? request : new CloseComplaintRequest(), adminUser)
+                : null;
+        return ResponseEntity.ok(ApiResponse.success(
+                "Complaint closed successfully by administrator", response));
     }
 }

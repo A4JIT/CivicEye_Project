@@ -47,6 +47,9 @@ class AdminComplaintControllerTest {
     @Mock
     private AiRecommendationService aiRecommendationService;
 
+    @Mock
+    private ComplaintLifecycleService lifecycleService;
+
     @InjectMocks
     private AdminComplaintController adminComplaintController;
 
@@ -218,5 +221,35 @@ class AdminComplaintControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("AI recommendation overridden successfully by administrator"))
                 .andExpect(jsonPath("$.data.category").value("STREETLIGHTS_AND_ELECTRICITY"));
+    }
+
+    @Test
+    @DisplayName("POST and PUT /api/v1/admin/complaints/{id}/close returns closed complaint")
+    void testCloseComplaint_Success() throws Exception {
+        ComplaintResponse closed = ComplaintResponse.builder()
+                .id(1L)
+                .status(ComplaintStatus.CLOSED)
+                .closureRemarks("Officially inspected and closed.")
+                .build();
+
+        when(lifecycleService.closeComplaint(eq(1L), any(CloseComplaintRequest.class), any()))
+                .thenReturn(closed);
+
+        CloseComplaintRequest request = new CloseComplaintRequest("Officially inspected and closed.");
+
+        mockMvc.perform(post("/api/v1/admin/complaints/1/close")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.status").value("CLOSED"))
+                .andExpect(jsonPath("$.data.closureRemarks").value("Officially inspected and closed."));
+
+        mockMvc.perform(put("/api/v1/admin/complaints/1/close")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.status").value("CLOSED"));
     }
 }

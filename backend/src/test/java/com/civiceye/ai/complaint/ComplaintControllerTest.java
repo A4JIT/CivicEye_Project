@@ -47,6 +47,9 @@ class ComplaintControllerTest {
     @Mock
     private AiRecommendationService aiRecommendationService;
 
+    @Mock
+    private FeedbackService feedbackService;
+
     @InjectMocks
     private ComplaintController complaintController;
 
@@ -252,14 +255,15 @@ class ComplaintControllerTest {
     @Test
     @DisplayName("POST /api/complaints/{id}/feedback should return 201 with feedback response")
     void submitFeedback_Returns201() throws Exception {
-        ComplaintFeedbackRequest request = new ComplaintFeedbackRequest(5, "Great work!");
-        ComplaintFeedbackResponse feedbackResponse = new ComplaintFeedbackResponse();
-        feedbackResponse.setId(10L);
-        feedbackResponse.setComplaintId(1L);
-        feedbackResponse.setRating(5);
-        feedbackResponse.setComments("Great work!");
+        SubmitFeedbackRequest request = new SubmitFeedbackRequest(5, "Great work!");
+        FeedbackResponse feedbackResponse = FeedbackResponse.builder()
+                .id(10L)
+                .complaintId(1L)
+                .rating(5)
+                .comments("Great work!")
+                .build();
 
-        when(lifecycleService.submitFeedback(eq(1L), any(), any())).thenReturn(feedbackResponse);
+        when(feedbackService.submitFeedback(eq(1L), any(), any())).thenReturn(feedbackResponse);
 
         mockMvc.perform(post("/api/complaints/1/feedback")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -271,7 +275,27 @@ class ComplaintControllerTest {
     }
 
     @Test
-    @DisplayName("PUT /api/complaints/{id}/confirm-resolution should return 200 with closed complaint")
+    @DisplayName("GET /api/complaints/{id}/feedback should return 200 with feedback details")
+    void getFeedback_Returns200() throws Exception {
+        FeedbackResponse feedbackResponse = FeedbackResponse.builder()
+                .id(10L)
+                .complaintId(1L)
+                .rating(5)
+                .comments("Great work!")
+                .build();
+
+        when(feedbackService.getFeedbackByComplaintId(eq(1L), any())).thenReturn(feedbackResponse);
+
+        mockMvc.perform(get("/api/complaints/1/feedback")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(10))
+                .andExpect(jsonPath("$.data.rating").value(5));
+    }
+
+    @Test
+    @DisplayName("POST and PUT /api/complaints/{id}/confirm-resolution should return 200 with closed complaint")
     void confirmResolution_Returns200() throws Exception {
         ConfirmResolutionRequest request = new ConfirmResolutionRequest("Confirmed fixed.", 5);
         ComplaintResponse closedResponse = ComplaintResponse.builder()
@@ -283,17 +307,24 @@ class ComplaintControllerTest {
 
         when(lifecycleService.confirmResolution(eq(1L), any(), any())).thenReturn(closedResponse);
 
-        mockMvc.perform(put("/api/complaints/1/confirm-resolution")
+        mockMvc.perform(post("/api/complaints/1/confirm-resolution")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.status").value("CLOSED"))
                 .andExpect(jsonPath("$.data.citizenConfirmedResolution").value(true));
+
+        mockMvc.perform(put("/api/complaints/1/confirm-resolution")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.status").value("CLOSED"));
     }
 
     @Test
-    @DisplayName("PUT /api/complaints/{id}/close should return 200 with admin closed complaint")
+    @DisplayName("POST and PUT /api/complaints/{id}/close should return 200 with admin closed complaint")
     void closeComplaint_Returns200() throws Exception {
         CloseComplaintRequest request = new CloseComplaintRequest("Admin closure remarks.");
         ComplaintResponse closedResponse = ComplaintResponse.builder()
@@ -303,6 +334,13 @@ class ComplaintControllerTest {
                 .build();
 
         when(lifecycleService.closeComplaint(eq(1L), any(), any())).thenReturn(closedResponse);
+
+        mockMvc.perform(post("/api/complaints/1/close")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.status").value("CLOSED"));
 
         mockMvc.perform(put("/api/complaints/1/close")
                         .contentType(MediaType.APPLICATION_JSON)
