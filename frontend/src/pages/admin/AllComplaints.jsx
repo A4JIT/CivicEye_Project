@@ -388,13 +388,17 @@ const AllComplaints = () => {
                         <span className="category-tag-pill">
                           {item.category?.replace(/_/g, ' ')}
                         </span>
-                        {item.aiCategoryOverridden ? (
-                          <span className="ai-override-pill" title="Category modified by Admin">
+                        {item.aiCategoryOverridden || item.isOverridden || item.aiRecommendation?.isOverridden ? (
+                          <span className="ai-override-pill" title="Category / Priority modified by Admin" data-testid="chip-ai-overridden">
                             Overridden
                           </span>
                         ) : (
-                          <span className="ai-suggested-pill" title="AI keyword rule recommendation">
-                            ✨ AI Match
+                          <span
+                            className="ai-suggested-pill"
+                            title={item.aiRecommendation?.explanation || "AI rule recommendation"}
+                            data-testid="chip-ai-suggestion"
+                          >
+                            ✨ AI: {item.aiRecommendation?.suggestedDepartmentCode || (item.departmentName ? item.departmentName.split(' ')[0] : (item.category?.replace(/_/g, ' ') || 'Civic'))} | {item.aiRecommendation?.suggestedPriority || item.priority} ({Math.round(((item.aiRecommendation?.confidenceScore ?? 0.88) * 100))}%)
                           </span>
                         )}
                         <span className="complaint-location">📍 {item.location}</span>

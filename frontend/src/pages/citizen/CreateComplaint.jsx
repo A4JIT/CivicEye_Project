@@ -1,6 +1,7 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import complaintService from '../../services/complaintService'
+import aiService from '../../services/aiService'
 import Loader from '../../components/common/Loader'
 
 const CATEGORIES = [
@@ -71,6 +72,44 @@ const CreateComplaint = () => {
   const [serverError, setServerError] = useState(null)
   const [submittedComplaint, setSubmittedComplaint] = useState(null)
   const [copied, setCopied] = useState(false)
+
+  // AI Real-Time Suggestion States
+  const [aiSuggestion, setAiSuggestion] = useState(null)
+  const [aiLoading, setAiLoading] = useState(false)
+
+  // Real-time debounced AI recommendation calculation
+  useEffect(() => {
+    if (!formData.title || formData.title.trim().length < 3) {
+      setAiSuggestion(null)
+      return
+    }
+
+    setAiLoading(true)
+    const timer = setTimeout(async () => {
+      try {
+        const suggestion = await aiService.getRealtimeRecommendation({
+          title: formData.title,
+          description: formData.description,
+          location: formData.location,
+        })
+        setAiSuggestion(suggestion)
+      } catch (err) {
+        console.error('Failed to fetch real-time AI recommendation', err)
+      } finally {
+        setAiLoading(false)
+      }
+    }, 350)
+
+    return () => clearTimeout(timer)
+  }, [formData.title, formData.description, formData.location])
+
+  const normalizeCategory = (cat) => {
+    if (!cat) return ''
+    if (cat === 'WATER_SUPPLY') return 'WATER_SUPPLY_AND_LEAKAGE'
+    if (cat === 'SOLID_WASTE' || cat === 'SANITATION') return 'GARBAGE_AND_CLEANLINESS'
+    if (cat === 'ELECTRICITY') return 'STREETLIGHTS_AND_ELECTRICITY'
+    return cat
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -260,6 +299,7 @@ const CreateComplaint = () => {
     setSubmittedComplaint(null)
     setFormErrors({})
     setServerError(null)
+    setAiSuggestion(null)
   }
 
   // Success Confirmation Screen
@@ -450,6 +490,87 @@ const CreateComplaint = () => {
               </div>
             )}
           </div>
+
+          {/* AI Real-Time Assistant Widget */}
+          {(aiLoading || aiSuggestion) && (
+            <div className="ai-realtime-assistant" data-testid="ai-realtime-widget">
+              <div className="ai-widget-header">
+                <div className="ai-widget-title-group">
+                  <span className="ai-icon-pulse">✨</span>
+                  <h4 className="ai-widget-title">AI Triage Assistant</h4>
+                  {aiLoading ? (
+                    <span className="ai-status-tag loading">Analyzing text...</span>
+                  ) : (
+                    <span className="ai-status-tag ready">Suggestions Ready</span>
+                  )}
+                </div>
+                {aiSuggestion && (
+                  <div className="confidence-meter-container" data-testid="ai-confidence-meter">
+                    <span className="confidence-label">
+                      {Math.round((aiSuggestion.confidenceScore || 0.8) * 100)}% Confidence
+                    </span>
+                    <div className="confidence-meter-track">
+                      <div
+                        className="confidence-meter-fill"
+                        style={{ width: `${Math.round((aiSuggestion.confidenceScore || 0.8) * 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {aiSuggestion && (
+                <div className="ai-widget-body">
+                  <div className="ai-suggestion-pills">
+                    <div className="ai-pill-item">
+                      <span className="pill-label">Suggested Category:</span>
+                      <span className="pill-value category-val" data-testid="ai-suggested-category">
+                        {normalizeCategory(aiSuggestion.suggestedCategory)?.replace(/_/g, ' ')}
+                      </span>
+                      {formData.category === normalizeCategory(aiSuggestion.suggestedCategory) ? (
+                        <span className="badge-applied-check" data-testid="badge-category-applied">✓ Applied</span>
+                      ) : (
+                        <button
+                          type="button"
+                          className="btn-apply-suggestion"
+                          onClick={() => handleCategorySelect(normalizeCategory(aiSuggestion.suggestedCategory))}
+                          data-testid="btn-apply-ai-category"
+                        >
+                          Apply Category
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="ai-pill-item">
+                      <span className="pill-label">Calculated Severity:</span>
+                      <span
+                        className={`pill-value priority-badge priority-${aiSuggestion.suggestedPriority?.toLowerCase()}`}
+                        data-testid="ai-suggested-priority"
+                      >
+                        {aiSuggestion.suggestedPriority}
+                      </span>
+                    </div>
+
+                    {aiSuggestion.suggestedDepartmentName && (
+                      <div className="ai-pill-item">
+                        <span className="pill-label">Auto-Route Dept:</span>
+                        <span className="pill-value dept-val" data-testid="ai-suggested-dept">
+                          {aiSuggestion.suggestedDepartmentName}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {aiSuggestion.explanation && (
+                    <div className="ai-explanation-box" data-testid="ai-explanation-text">
+                      <span className="explanation-icon">💡</span>
+                      <span className="explanation-content">{aiSuggestion.explanation}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Step 3: Location Details */}
