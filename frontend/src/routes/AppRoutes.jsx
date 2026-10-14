@@ -12,6 +12,7 @@ import AdminDashboard from '../pages/admin/AdminDashboard'
 import AllComplaints from '../pages/admin/AllComplaints'
 import ReviewComplaint from '../pages/admin/ReviewComplaint'
 import DepartmentDashboard from '../pages/department/DepartmentDashboard'
+import DepartmentComplaints from '../pages/department/DepartmentComplaints'
 
 /**
  * Dispatches to the appropriate dashboard component based on authenticated user role
@@ -90,6 +91,22 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute allowedRoles={['DEPARTMENT_USER', 'ADMIN']}>
             <DepartmentDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/department/complaints"
+        element={
+          <ProtectedRoute allowedRoles={['DEPARTMENT_USER', 'ADMIN']}>
+            <DepartmentComplaints />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/department/assigned"
+        element={
+          <ProtectedRoute allowedRoles={['DEPARTMENT_USER', 'ADMIN']}>
+            <DepartmentComplaints />
           </ProtectedRoute>
         }
       />

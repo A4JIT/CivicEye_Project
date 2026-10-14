@@ -1,12 +1,14 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import departmentService from '../../services/departmentService'
 
 const Sidebar = () => {
   const { user, logout } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
   const [collapsed, setCollapsed] = useState(false)
+  const [assignedCount, setAssignedCount] = useState(null)
 
   const handleLogout = () => {
     logout()
@@ -14,6 +16,26 @@ const Sidebar = () => {
   }
 
   const role = user?.role || 'CITIZEN'
+
+  useEffect(() => {
+    let isMounted = true
+    if (role === 'DEPARTMENT_USER') {
+      departmentService
+        .getDepartmentComplaints({ status: 'ASSIGNED' })
+        .then((data) => {
+          if (isMounted) {
+            const count = data?.totalItems ?? (data?.complaints ? data.complaints.length : null)
+            if (count !== null && count !== undefined) {
+              setAssignedCount(count)
+            }
+          }
+        })
+        .catch(() => {})
+    }
+    return () => {
+      isMounted = false
+    }
+  }, [role])
 
   const citizenNav = [
     { label: 'Overview', path: '/dashboard', icon: '📊' },
@@ -31,9 +53,14 @@ const Sidebar = () => {
 
   const departmentNav = [
     { label: 'Department Queue', path: '/dashboard', icon: '🏢' },
-    { label: 'Assigned Work', path: '/department/assigned', icon: '🔧' },
-    { label: 'High Priority', path: '/department/urgent', icon: '⚡' },
-    { label: 'Resolved Archive', path: '/department/resolved', icon: '✅' },
+    {
+      label: 'Assigned Work',
+      path: '/department/complaints',
+      icon: '🔧',
+      badge: assignedCount != null && assignedCount > 0 ? assignedCount : null,
+    },
+    { label: 'High Priority', path: '/department/complaints?priority=HIGH', icon: '⚡' },
+    { label: 'Resolved Archive', path: '/department/complaints?status=RESOLVED', icon: '✅' },
   ]
 
   let navItems = citizenNav
@@ -93,6 +120,9 @@ const Sidebar = () => {
             >
               <span className="sidebar-icon">{item.icon}</span>
               {!collapsed && <span className="sidebar-label">{item.label}</span>}
+              {!collapsed && item.badge != null && (
+                <span className="sidebar-badge" data-testid="sidebar-badge">{item.badge}</span>
+              )}
             </Link>
           )
         })}
