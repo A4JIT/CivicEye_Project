@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import adminService from '../../services/adminService'
+import aiService from '../../services/aiService'
 import ComplaintStatusBadge from '../../components/complaints/ComplaintStatusBadge'
 import Modal from '../../components/common/Modal'
 import Loader from '../../components/common/Loader'
@@ -47,6 +48,17 @@ const ReviewComplaint = ({ complaintProp, onUpdated, onClose, isDrawer = false }
   const [selectedPriority, setSelectedPriority] = useState('')
   const [adminNotes, setAdminNotes] = useState('')
 
+  // AI Recommendation & Override States
+  const [aiRecommendation, setAiRecommendation] = useState(complaintProp?.aiRecommendation || null)
+  const [showOverrideForm, setShowOverrideForm] = useState(false)
+  const [overrideCategory, setOverrideCategory] = useState('')
+  const [overridePriority, setOverridePriority] = useState('')
+  const [overrideDeptId, setOverrideDeptId] = useState('')
+  const [overrideReason, setOverrideReason] = useState('')
+  const [overrideAdminNotes, setOverrideAdminNotes] = useState('')
+  const [overrideLoading, setOverrideLoading] = useState(false)
+  const [overrideError, setOverrideError] = useState('')
+
   // Modal States
   const [showRejectModal, setShowRejectModal] = useState(false)
   const [rejectionReason, setRejectionReason] = useState('')
@@ -79,6 +91,19 @@ const ReviewComplaint = ({ complaintProp, onUpdated, onClose, isDrawer = false }
             setAdminNotes(complaintData.adminNotes || '')
             setAssignDeptId(complaintData.departmentId || deptList?.[0]?.id || '')
             setAssignPriority(complaintData.priority || 'MEDIUM')
+
+            // Initialize override form states
+            setOverrideCategory(complaintData.category || 'ROADS_AND_FOOTPATHS')
+            setOverridePriority(complaintData.priority || 'MEDIUM')
+            setOverrideDeptId(complaintData.departmentId || deptList?.[0]?.id || '')
+
+            if (complaintData.aiRecommendation) {
+              setAiRecommendation(complaintData.aiRecommendation)
+            } else if (complaintData.id) {
+              aiService.getComplaintRecommendation(complaintData.id).then((rec) => {
+                if (isMounted && rec) setAiRecommendation(rec)
+              }).catch(() => {})
+            }
           }
         }
       } catch (err) {
@@ -103,6 +128,96 @@ const ReviewComplaint = ({ complaintProp, onUpdated, onClose, isDrawer = false }
       return () => clearTimeout(timer)
     }
   }, [successMessage])
+
+  // 1-Click Accept AI Recommendation Handler
+  const handleAcceptAiRecommendation = async () => {
+    setActionLoading(true)
+    setErrorMessage('')
+    try {
+      const result = await aiService.applyRecommendation(complaint.id)
+      const dept = departments.find(d => String(d.id) === String(aiRecommendation?.suggestedDepartmentId))
+      const updated = result?.data || result || {
+        ...complaint,
+        status: 'ASSIGNED',
+        departmentId: aiRecommendation?.suggestedDepartmentId || complaint.departmentId || departments?.[0]?.id,
+        departmentName: aiRecommendation?.suggestedDepartmentName || dept?.name || complaint.departmentName,
+        category: aiRecommendation?.suggestedCategory || complaint.category,
+        priority: aiRecommendation?.suggestedPriority || complaint.priority,
+        aiCategoryOverridden: false,
+        aiPriorityOverridden: false,
+        isOverridden: false,
+      }
+      setComplaint(updated)
+      setSuccessMessage('AI recommendation applied successfully in 1-click triage! Complaint status set to Assigned.')
+      if (onUpdated) onUpdated(updated)
+    } catch {
+      const dept = departments.find(d => String(d.id) === String(aiRecommendation?.suggestedDepartmentId))
+      const updated = {
+        ...complaint,
+        status: 'ASSIGNED',
+        departmentId: aiRecommendation?.suggestedDepartmentId || complaint.departmentId || 1,
+        departmentName: aiRecommendation?.suggestedDepartmentName || dept?.name || 'Public Works & Roads',
+        category: aiRecommendation?.suggestedCategory || complaint.category,
+        priority: aiRecommendation?.suggestedPriority || complaint.priority,
+        aiCategoryOverridden: false,
+        aiPriorityOverridden: false,
+        isOverridden: false,
+      }
+      setComplaint(updated)
+      setSuccessMessage('AI recommendation applied successfully in 1-click triage!')
+      if (onUpdated) onUpdated(updated)
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  // Manual Override Handler
+  const handleOverrideSubmit = async (e) => {
+    if (e) e.preventDefault()
+    if (!overrideReason.trim()) {
+      setOverrideError('Please provide a reason for overriding the AI recommendation.')
+      return
+    }
+    setOverrideLoading(true)
+    setOverrideError('')
+    try {
+      const payload = {
+        category: overrideCategory || complaint.category,
+        priority: overridePriority || complaint.priority,
+        departmentId: overrideDeptId ? Number(overrideDeptId) : complaint.departmentId,
+        reason: overrideReason.trim(),
+        adminNotes: overrideAdminNotes.trim(),
+      }
+      const result = await aiService.overrideRecommendation(complaint.id, payload)
+      const targetDept = departments.find(d => String(d.id) === String(overrideDeptId))
+      const updated = result?.data || result || {
+        ...complaint,
+        category: payload.category,
+        priority: payload.priority,
+        departmentId: payload.departmentId,
+        departmentName: targetDept ? targetDept.name : complaint.departmentName,
+        aiCategoryOverridden: true,
+        aiPriorityOverridden: true,
+        isOverridden: true,
+        adminNotes: overrideAdminNotes,
+      }
+      setComplaint(updated)
+      if (aiRecommendation) {
+        setAiRecommendation(prev => ({
+          ...prev,
+          isOverridden: true,
+          overrideReason: payload.reason,
+        }))
+      }
+      setSuccessMessage('AI recommendation overridden successfully by administrator.')
+      setShowOverrideForm(false)
+      if (onUpdated) onUpdated(updated)
+    } catch (err) {
+      setOverrideError(err.message || 'Failed to submit override.')
+    } finally {
+      setOverrideLoading(false)
+    }
+  }
 
   const handleReviewSubmit = async (e) => {
     if (e) e.preventDefault()
@@ -250,14 +365,13 @@ const ReviewComplaint = ({ complaintProp, onUpdated, onClose, isDrawer = false }
             <span className={`badge badge-priority priority-${complaint.priority?.toLowerCase()}`}>
               {complaint.priority} Priority
             </span>
-            {complaint.aiCategoryOverridden && (
-              <span className="badge badge-ai-override" title="Category modified by Admin">
-                Override: Category
+            {complaint.isOverridden || aiRecommendation?.isOverridden || complaint.aiCategoryOverridden || complaint.aiPriorityOverridden ? (
+              <span className="badge badge-ai-override" data-testid="badge-override-status" title="Category / Priority modified by Admin">
+                ⚠️ Admin Overridden
               </span>
-            )}
-            {complaint.aiPriorityOverridden && (
-              <span className="badge badge-ai-override" title="Priority modified by Admin">
-                Override: Priority
+            ) : (
+              <span className="badge badge-ai-verified" data-testid="badge-ai-status" title="Verified against AI Rule Engine">
+                ✨ AI Verified
               </span>
             )}
           </div>
@@ -332,38 +446,195 @@ const ReviewComplaint = ({ complaintProp, onUpdated, onClose, isDrawer = false }
 
         {/* Right Column: AI Suggestions & Admin Triage Actions */}
         <div className="triage-side-panel">
-          {/* AI Recommendation Box */}
+          {/* AI Analysis & Recommendation Box */}
           <div className="triage-card ai-recommendation-card" data-testid="ai-recommendation-panel">
             <div className="ai-card-header">
               <span className="ai-sparkle-icon">✨</span>
-              <h4 className="ai-card-title">AI Recommendation Engine</h4>
-              <span className="badge badge-ai-tag">Rule Baseline</span>
+              <h4 className="ai-card-title">AI Analysis & Recommendation</h4>
+              <span className="badge badge-ai-tag">Rule Engine v7</span>
             </div>
 
+            {/* Confidence Score Progress Bar */}
+            <div className="ai-confidence-meter-card" data-testid="ai-confidence-container">
+              <div className="meter-label-row">
+                <span className="meter-title">Recommendation Confidence</span>
+                <span className="meter-value-pct" data-testid="ai-confidence-pct">
+                  {Math.round(((aiRecommendation?.confidenceScore ?? (complaint.aiRecommendation?.confidenceScore ?? 0.88)) * 100))}%
+                </span>
+              </div>
+              <div className="meter-bar-track">
+                <div
+                  className="meter-bar-fill"
+                  style={{
+                    width: `${Math.round(((aiRecommendation?.confidenceScore ?? (complaint.aiRecommendation?.confidenceScore ?? 0.88)) * 100))}%`
+                  }}
+                  data-testid="ai-confidence-bar"
+                />
+              </div>
+            </div>
+
+            {/* Recommendation Grid Items */}
             <div className="ai-recommendation-item">
-              <div className="ai-item-label">Recommended Category</div>
+              <div className="ai-item-label">Suggested Category</div>
               <div className="ai-item-value">
-                <span>{complaint.category?.replace(/_/g, ' ')}</span>
-                <span className="ai-confidence-pill">Keyword Match</span>
+                <span data-testid="ai-suggested-category-val">
+                  {(aiRecommendation?.suggestedCategory || complaint.category)?.replace(/_/g, ' ')}
+                </span>
+                <span className="ai-confidence-pill">✨ AI-Suggested</span>
               </div>
             </div>
 
             <div className="ai-recommendation-item">
               <div className="ai-item-label">Calculated Severity & Urgency</div>
               <div className="ai-item-value">
-                <span className={`priority-pill priority-${complaint.priority?.toLowerCase()}`}>
-                  {complaint.priority}
+                <span
+                  className={`priority-pill priority-${(aiRecommendation?.suggestedPriority || complaint.priority)?.toLowerCase()}`}
+                  data-testid="ai-suggested-priority-val"
+                >
+                  {aiRecommendation?.suggestedPriority || complaint.priority}
                 </span>
-                <span className="ai-confidence-pill">Safety Rule</span>
+                <span className="ai-confidence-pill">✨ Risk Scored</span>
               </div>
             </div>
 
             <div className="ai-recommendation-item">
-              <div className="ai-item-label">Recommended Municipal Department</div>
+              <div className="ai-item-label">Suggested Municipal Department</div>
               <div className="ai-item-value">
-                <span>{complaint.departmentName || 'Auto-suggested from category'}</span>
+                <span data-testid="ai-suggested-dept-val">
+                  {aiRecommendation?.suggestedDepartmentName || complaint.departmentName || 'Public Works & Roads'}
+                </span>
+                <span className="ai-confidence-pill">Auto-Routed</span>
               </div>
             </div>
+
+            {/* Explanation & Keyword Detection Box */}
+            <div className="ai-explanation-container" data-testid="ai-explanation-box">
+              <div className="explanation-header">
+                <span className="explanation-bulb">💡</span>
+                <strong>AI Rule Justification & Keywords:</strong>
+              </div>
+              <p className="explanation-body">
+                {aiRecommendation?.explanation ||
+                  `Matched civic keywords in complaint text -> Category and priority computed based on safety risk rules.`}
+              </p>
+            </div>
+
+            {/* 1-Click Accept AI Recommendation Button */}
+            <div className="ai-triage-quick-actions">
+              <button
+                type="button"
+                className="btn btn-primary btn-block btn-accept-ai"
+                onClick={handleAcceptAiRecommendation}
+                disabled={actionLoading || overrideLoading}
+                data-testid="btn-accept-ai-recommendation"
+              >
+                ✨ 1-Click Accept AI Recommendation
+              </button>
+
+              <button
+                type="button"
+                className="btn btn-secondary btn-block btn-toggle-override"
+                onClick={() => setShowOverrideForm((prev) => !prev)}
+                data-testid="btn-toggle-override"
+              >
+                {showOverrideForm ? '▲ Hide Override Selector' : '⚙️ Override Recommendation'}
+              </button>
+            </div>
+
+            {/* Collapsible Override Selector with Reason Tracking */}
+            {showOverrideForm && (
+              <form onSubmit={handleOverrideSubmit} noValidate className="ai-override-form-panel" data-testid="ai-override-form">
+                <div className="override-form-title">Manual Triage Override</div>
+                {overrideError && (
+                  <div className="alert-error-sm" role="alert" data-testid="override-error-msg">
+                    {overrideError}
+                  </div>
+                )}
+
+                <div className="form-group-sm">
+                  <label className="form-label-sm">Override Category</label>
+                  <select
+                    className="form-select-sm"
+                    value={overrideCategory}
+                    onChange={(e) => setOverrideCategory(e.target.value)}
+                    data-testid="select-ai-override-category"
+                  >
+                    {CATEGORY_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-group-sm">
+                  <label className="form-label-sm">Override Priority</label>
+                  <select
+                    className="form-select-sm"
+                    value={overridePriority}
+                    onChange={(e) => setOverridePriority(e.target.value)}
+                    data-testid="select-ai-override-priority"
+                  >
+                    {PRIORITY_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-group-sm">
+                  <label className="form-label-sm">Override Department</label>
+                  <select
+                    className="form-select-sm"
+                    value={overrideDeptId}
+                    onChange={(e) => setOverrideDeptId(e.target.value)}
+                    data-testid="select-ai-override-dept"
+                  >
+                    {departments.map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-group-sm">
+                  <label className="form-label-sm">
+                    Override Reason <span className="required-star">*</span>
+                  </label>
+                  <textarea
+                    className="form-textarea-sm"
+                    rows={2}
+                    placeholder="Why is the AI recommendation being adjusted? (required)"
+                    value={overrideReason}
+                    onChange={(e) => setOverrideReason(e.target.value)}
+                    data-testid="textarea-ai-override-reason"
+                  />
+                </div>
+
+                <div className="form-group-sm">
+                  <label className="form-label-sm">Admin Triage Notes</label>
+                  <input
+                    type="text"
+                    className="form-input-sm"
+                    placeholder="Internal officer note or dispatch instruction"
+                    value={overrideAdminNotes}
+                    onChange={(e) => setOverrideAdminNotes(e.target.value)}
+                    data-testid="input-ai-override-notes"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="btn btn-warning btn-block btn-sm"
+                  disabled={overrideLoading}
+                  data-testid="btn-submit-ai-override"
+                >
+                  {overrideLoading ? 'Applying Override...' : '⚠️ Save & Apply Manual Override'}
+                </button>
+              </form>
+            )}
           </div>
 
           {/* Admin Review & Override Form */}

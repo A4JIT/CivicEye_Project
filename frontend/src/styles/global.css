@@ -4056,6 +4056,358 @@ a:hover {
   border-radius: var(--radius-full);
 }
 
+/* ==========================================================================
+   Phase 7: AI Recommendation & Triage Override Styles
+   ========================================================================== */
+
+/* Citizen Portal Real-Time AI Assistant Widget */
+.ai-realtime-assistant {
+  margin-top: 1rem;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, rgba(30, 27, 75, 0.55), rgba(15, 23, 42, 0.75));
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 20px -2px rgba(147, 51, 234, 0.15);
+  backdrop-filter: blur(10px);
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.ai-widget-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(168, 85, 247, 0.2);
+}
+
+.ai-widget-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ai-icon-pulse {
+  font-size: 1.15rem;
+  animation: pulseSparkle 2s infinite ease-in-out;
+}
+
+@keyframes pulseSparkle {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.2); opacity: 1; filter: drop-shadow(0 0 6px rgba(168, 85, 247, 0.8)); }
+}
+
+.ai-widget-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #e9d5ff;
+  margin: 0;
+}
+
+.ai-status-tag {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.12rem 0.5rem;
+  border-radius: var(--radius-full);
+}
+
+.ai-status-tag.loading {
+  background: rgba(234, 179, 8, 0.15);
+  color: #facc15;
+  border: 1px solid rgba(234, 179, 8, 0.3);
+}
+
+.ai-status-tag.ready {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+/* Confidence Meters */
+.confidence-meter-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.confidence-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #c084fc;
+}
+
+.confidence-meter-track {
+  width: 90px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.confidence-meter-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #a855f7, #ec4899);
+  border-radius: 9999px;
+  transition: width 0.4s ease-out;
+}
+
+/* AI Widget Body & Pills */
+.ai-widget-body {
+  padding-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.ai-suggestion-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.ai-pill-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.3rem 0.65rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.8rem;
+}
+
+.pill-label {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.pill-value {
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.pill-value.category-val {
+  color: #d8b4fe;
+}
+
+.pill-value.dept-val {
+  color: #38bdf8;
+}
+
+.btn-apply-suggestion {
+  background: rgba(168, 85, 247, 0.25);
+  color: #e9d5ff;
+  border: 1px solid rgba(168, 85, 247, 0.45);
+  padding: 0.15rem 0.55rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-apply-suggestion:hover {
+  background: rgba(168, 85, 247, 0.45);
+  color: #fff;
+}
+
+.badge-applied-check {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.15);
+  padding: 0.12rem 0.45rem;
+  border-radius: var(--radius-sm);
+}
+
+.ai-explanation-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  background: rgba(147, 51, 234, 0.1);
+  border: 1px dashed rgba(168, 85, 247, 0.3);
+  padding: 0.55rem 0.75rem;
+  border-radius: var(--radius-md);
+  font-size: 0.78rem;
+  color: #e9d5ff;
+}
+
+.explanation-icon {
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.explanation-content {
+  line-height: 1.4;
+}
+
+/* Admin Review Drawer AI Recommendation Panel Additions */
+.ai-confidence-meter-card {
+  margin: 0.5rem 0 0.85rem;
+  padding: 0.65rem 0.85rem;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(168, 85, 247, 0.2);
+}
+
+.meter-label-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  margin-bottom: 0.35rem;
+}
+
+.meter-title {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.meter-value-pct {
+  color: #c084fc;
+  font-weight: 700;
+}
+
+.meter-bar-track {
+  width: 100%;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.meter-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #8b5cf6, #ec4899);
+  border-radius: 9999px;
+  transition: width 0.4s ease-out;
+}
+
+.ai-explanation-container {
+  margin: 0.85rem 0;
+  padding: 0.65rem 0.85rem;
+  background: rgba(168, 85, 247, 0.08);
+  border: 1px solid rgba(168, 85, 247, 0.25);
+  border-radius: var(--radius-md);
+  font-size: 0.82rem;
+}
+
+.explanation-header {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #c084fc;
+  margin-bottom: 0.25rem;
+  font-size: 0.8rem;
+}
+
+.explanation-body {
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.ai-triage-quick-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+}
+
+.btn-accept-ai {
+  background: linear-gradient(135deg, #7c3aed, #9333ea);
+  border: none;
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35);
+  transition: all var(--transition-fast);
+}
+
+.btn-accept-ai:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.5);
+}
+
+.btn-toggle-override {
+  font-size: 0.82rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text-muted);
+}
+
+.btn-toggle-override:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-main);
+}
+
+/* Collapsible Manual Override Panel */
+.ai-override-form-panel {
+  margin-top: 0.85rem;
+  padding: 0.85rem;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: var(--radius-md);
+  animation: fadeIn 0.25s ease-out;
+}
+
+.override-form-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #fbbf24;
+  margin-bottom: 0.65rem;
+}
+
+.alert-error-sm {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #f87171;
+  font-size: 0.75rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: var(--radius-sm);
+  margin-bottom: 0.65rem;
+}
+
+.form-input-sm {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-main);
+  padding: 0.45rem 0.65rem;
+  font-size: 0.82rem;
+}
+
+.form-input-sm:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.required-star {
+  color: #ef4444;
+}
+
+/* AI Status Badges in Review Header */
+.badge-ai-verified {
+  background: rgba(168, 85, 247, 0.15);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  color: #c084fc;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.18rem 0.55rem;
+  border-radius: var(--radius-full);
+}
+
+.badge-ai-override {
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #fbbf24;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.18rem 0.55rem;
+  border-radius: var(--radius-full);
+}
+
 
 
 
