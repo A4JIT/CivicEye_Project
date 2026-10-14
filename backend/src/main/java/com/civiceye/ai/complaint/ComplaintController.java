@@ -17,27 +17,39 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.civiceye.ai.ai.AiRecommendationService;
+import com.civiceye.ai.ai.dto.AiRecommendationResponse;
+
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/complaints")
+@RequestMapping({"/api/v1/complaints", "/api/complaints"})
 public class ComplaintController {
 
     private final ComplaintService complaintService;
     private final ComplaintLifecycleService lifecycleService;
     private final AdminComplaintService adminComplaintService;
+    private final AiRecommendationService aiRecommendationService;
 
     public ComplaintController(ComplaintService complaintService) {
-        this(complaintService, null, null);
+        this(complaintService, null, null, null);
+    }
+
+    public ComplaintController(ComplaintService complaintService,
+                               ComplaintLifecycleService lifecycleService,
+                               AdminComplaintService adminComplaintService) {
+        this(complaintService, lifecycleService, adminComplaintService, null);
     }
 
     @org.springframework.beans.factory.annotation.Autowired
     public ComplaintController(ComplaintService complaintService,
                                ComplaintLifecycleService lifecycleService,
-                               AdminComplaintService adminComplaintService) {
+                               AdminComplaintService adminComplaintService,
+                               AiRecommendationService aiRecommendationService) {
         this.complaintService = complaintService;
         this.lifecycleService = lifecycleService;
         this.adminComplaintService = adminComplaintService;
+        this.aiRecommendationService = aiRecommendationService;
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -163,5 +175,17 @@ public class ComplaintController {
             @Valid @RequestBody ProvideInfoRequest request) {
         ComplaintResponse response = adminComplaintService.provideInformation(id, request, null, currentUser);
         return ResponseEntity.ok(ApiResponse.success("Additional information provided successfully", response));
+    }
+
+    @GetMapping("/{id}/recommendation")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<AiRecommendationResponse>> getComplaintRecommendation(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal currentUser) {
+        if (aiRecommendationService == null) {
+            return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+        }
+        AiRecommendationResponse response = aiRecommendationService.getComplaintRecommendation(id, currentUser);
+        return ResponseEntity.ok(ApiResponse.success("AI recommendation retrieved successfully", response));
     }
 }

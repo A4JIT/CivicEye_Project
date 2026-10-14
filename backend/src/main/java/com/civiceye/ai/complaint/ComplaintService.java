@@ -1,5 +1,8 @@
 package com.civiceye.ai.complaint;
 
+import com.civiceye.ai.ai.AiRecommendation;
+import com.civiceye.ai.ai.AiRecommendationRepository;
+import com.civiceye.ai.ai.DepartmentRecommendationService;
 import com.civiceye.ai.complaint.dto.ComplaintResponse;
 import com.civiceye.ai.complaint.dto.CreateComplaintRequest;
 import com.civiceye.ai.exception.ResourceNotFoundException;
@@ -25,22 +28,35 @@ public class ComplaintService {
     private final UserRepository userRepository;
     private final FileStorageService fileStorageService;
     private final ComplaintStatusHistoryRepository statusHistoryRepository;
+    private final DepartmentRecommendationService departmentRecommendationService;
+    private final AiRecommendationRepository aiRecommendationRepository;
 
     public ComplaintService(ComplaintRepository complaintRepository,
                             UserRepository userRepository,
                             FileStorageService fileStorageService) {
-        this(complaintRepository, userRepository, fileStorageService, null);
+        this(complaintRepository, userRepository, fileStorageService, null, null, null);
+    }
+
+    public ComplaintService(ComplaintRepository complaintRepository,
+                            UserRepository userRepository,
+                            FileStorageService fileStorageService,
+                            ComplaintStatusHistoryRepository statusHistoryRepository) {
+        this(complaintRepository, userRepository, fileStorageService, statusHistoryRepository, null, null);
     }
 
     @org.springframework.beans.factory.annotation.Autowired
     public ComplaintService(ComplaintRepository complaintRepository,
                             UserRepository userRepository,
                             FileStorageService fileStorageService,
-                            ComplaintStatusHistoryRepository statusHistoryRepository) {
+                            ComplaintStatusHistoryRepository statusHistoryRepository,
+                            DepartmentRecommendationService departmentRecommendationService,
+                            AiRecommendationRepository aiRecommendationRepository) {
         this.complaintRepository = complaintRepository;
         this.userRepository = userRepository;
         this.fileStorageService = fileStorageService;
         this.statusHistoryRepository = statusHistoryRepository;
+        this.departmentRecommendationService = departmentRecommendationService;
+        this.aiRecommendationRepository = aiRecommendationRepository;
     }
 
     @Transactional
@@ -71,6 +87,22 @@ public class ComplaintService {
                 .build();
 
         Complaint savedComplaint = complaintRepository.save(complaint);
+
+        // Auto-populate AI recommendation on complaint registration
+        if (departmentRecommendationService != null && aiRecommendationRepository != null) {
+            try {
+                AiRecommendation aiRec = departmentRecommendationService.buildFullRecommendation(
+                        savedComplaint.getTitle(),
+                        savedComplaint.getDescription(),
+                        savedComplaint.getLocation()
+                );
+                aiRec.setComplaint(savedComplaint);
+                AiRecommendation savedAiRec = aiRecommendationRepository.save(aiRec);
+                savedComplaint.setAiRecommendation(savedAiRec);
+            } catch (Exception ex) {
+                // Non-blocking fallback to protect complaint submission flow
+            }
+        }
 
         if (statusHistoryRepository != null) {
             ComplaintStatusHistory initialHistory = ComplaintStatusHistory.builder()

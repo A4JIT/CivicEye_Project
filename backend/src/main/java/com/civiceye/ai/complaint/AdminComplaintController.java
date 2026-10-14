@@ -13,19 +13,30 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import com.civiceye.ai.ai.AiRecommendationService;
+import com.civiceye.ai.ai.dto.AiOverrideRequest;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/admin/complaints")
+@RequestMapping({"/api/v1/admin/complaints", "/api/admin/complaints"})
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminComplaintController {
 
     private final AdminComplaintService adminComplaintService;
+    private final AiRecommendationService aiRecommendationService;
 
     public AdminComplaintController(AdminComplaintService adminComplaintService) {
+        this(adminComplaintService, null);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public AdminComplaintController(AdminComplaintService adminComplaintService,
+                                    AiRecommendationService aiRecommendationService) {
         this.adminComplaintService = adminComplaintService;
+        this.aiRecommendationService = aiRecommendationService;
     }
 
     @GetMapping
@@ -105,5 +116,24 @@ public class AdminComplaintController {
         ComplaintResponse response = adminComplaintService.assignDepartment(id, request, adminUser);
         return ResponseEntity.ok(ApiResponse.success(
                 "Complaint successfully assigned to department", response));
+    }
+
+    @PostMapping("/{id}/apply-recommendation")
+    public ResponseEntity<ApiResponse<ComplaintResponse>> applyRecommendation(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal adminUser) {
+        ComplaintResponse response = aiRecommendationService.applyRecommendation(id, adminUser);
+        return ResponseEntity.ok(ApiResponse.success(
+                "AI recommendation applied successfully in 1-click triage", response));
+    }
+
+    @PostMapping("/{id}/override-recommendation")
+    public ResponseEntity<ApiResponse<ComplaintResponse>> overrideRecommendation(
+            @PathVariable Long id,
+            @RequestBody(required = false) AiOverrideRequest request,
+            @AuthenticationPrincipal UserPrincipal adminUser) {
+        ComplaintResponse response = aiRecommendationService.overrideRecommendation(id, request, adminUser);
+        return ResponseEntity.ok(ApiResponse.success(
+                "AI recommendation overridden successfully by administrator", response));
     }
 }
