@@ -14,3 +14,5 @@ app:
   jwt:
     secret: test_super_secret_key_for_testing_purposes_only_1234567890
     expiration: 3600000
+  seeder:
+    seed-complaints: false

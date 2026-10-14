@@ -2,8 +2,7 @@ package com.civiceye.ai.complaint;
 
 import com.civiceye.ai.ai.AiRecommendationService;
 import com.civiceye.ai.ai.dto.AiRecommendationResponse;
-import com.civiceye.ai.complaint.dto.ComplaintResponse;
-import com.civiceye.ai.complaint.dto.CreateComplaintRequest;
+import com.civiceye.ai.complaint.dto.*;
 import com.civiceye.ai.exception.GlobalExceptionHandler;
 import com.civiceye.ai.security.UserPrincipal;
 import com.civiceye.ai.user.Role;
@@ -248,5 +247,69 @@ class ComplaintControllerTest {
                 .andExpect(jsonPath("$.data.id").value(100))
                 .andExpect(jsonPath("$.data.complaintId").value(1))
                 .andExpect(jsonPath("$.data.suggestedCategory").value("STREETLIGHTS_AND_ELECTRICITY"));
+    }
+
+    @Test
+    @DisplayName("POST /api/complaints/{id}/feedback should return 201 with feedback response")
+    void submitFeedback_Returns201() throws Exception {
+        ComplaintFeedbackRequest request = new ComplaintFeedbackRequest(5, "Great work!");
+        ComplaintFeedbackResponse feedbackResponse = new ComplaintFeedbackResponse();
+        feedbackResponse.setId(10L);
+        feedbackResponse.setComplaintId(1L);
+        feedbackResponse.setRating(5);
+        feedbackResponse.setComments("Great work!");
+
+        when(lifecycleService.submitFeedback(eq(1L), any(), any())).thenReturn(feedbackResponse);
+
+        mockMvc.perform(post("/api/complaints/1/feedback")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.rating").value(5))
+                .andExpect(jsonPath("$.data.comments").value("Great work!"));
+    }
+
+    @Test
+    @DisplayName("PUT /api/complaints/{id}/confirm-resolution should return 200 with closed complaint")
+    void confirmResolution_Returns200() throws Exception {
+        ConfirmResolutionRequest request = new ConfirmResolutionRequest("Confirmed fixed.", 5);
+        ComplaintResponse closedResponse = ComplaintResponse.builder()
+                .id(1L)
+                .status(ComplaintStatus.CLOSED)
+                .citizenConfirmedResolution(true)
+                .closureRemarks("Confirmed fixed.")
+                .build();
+
+        when(lifecycleService.confirmResolution(eq(1L), any(), any())).thenReturn(closedResponse);
+
+        mockMvc.perform(put("/api/complaints/1/confirm-resolution")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.status").value("CLOSED"))
+                .andExpect(jsonPath("$.data.citizenConfirmedResolution").value(true));
+    }
+
+    @Test
+    @DisplayName("PUT /api/complaints/{id}/close should return 200 with admin closed complaint")
+    void closeComplaint_Returns200() throws Exception {
+        CloseComplaintRequest request = new CloseComplaintRequest("Admin closure remarks.");
+        ComplaintResponse closedResponse = ComplaintResponse.builder()
+                .id(1L)
+                .status(ComplaintStatus.CLOSED)
+                .closureRemarks("Admin closure remarks.")
+                .build();
+
+        when(lifecycleService.closeComplaint(eq(1L), any(), any())).thenReturn(closedResponse);
+
+        mockMvc.perform(put("/api/complaints/1/close")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.status").value("CLOSED"))
+                .andExpect(jsonPath("$.data.closureRemarks").value("Admin closure remarks."));
     }
 }

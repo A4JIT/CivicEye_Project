@@ -49,6 +49,9 @@ class ComplaintLifecycleServiceTest {
     @Mock
     private FileStorageService fileStorageService;
 
+    @Mock
+    private ComplaintFeedbackRepository feedbackRepository;
+
     @InjectMocks
     private ComplaintLifecycleService lifecycleService;
 
