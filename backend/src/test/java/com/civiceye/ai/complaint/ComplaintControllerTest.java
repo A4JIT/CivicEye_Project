@@ -1,5 +1,7 @@
 package com.civiceye.ai.complaint;
 
+import com.civiceye.ai.ai.AiRecommendationService;
+import com.civiceye.ai.ai.dto.AiRecommendationResponse;
 import com.civiceye.ai.complaint.dto.ComplaintResponse;
 import com.civiceye.ai.complaint.dto.CreateComplaintRequest;
 import com.civiceye.ai.exception.GlobalExceptionHandler;
@@ -42,6 +44,9 @@ class ComplaintControllerTest {
 
     @Mock
     private AdminComplaintService adminComplaintService;
+
+    @Mock
+    private AiRecommendationService aiRecommendationService;
 
     @InjectMocks
     private ComplaintController complaintController;
@@ -220,5 +225,28 @@ class ComplaintControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data[0].id").value(1));
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/complaints/{id}/recommendation should return 200 with AI recommendation")
+    void getComplaintRecommendation_Returns200() throws Exception {
+        AiRecommendationResponse recResponse = AiRecommendationResponse.builder()
+                .id(100L)
+                .complaintId(1L)
+                .suggestedCategory("STREETLIGHTS_AND_ELECTRICITY")
+                .suggestedPriority("MEDIUM")
+                .suggestedDepartmentName("Electricity & Street Lighting")
+                .confidenceScore(0.80)
+                .build();
+
+        when(aiRecommendationService.getComplaintRecommendation(eq(1L), any())).thenReturn(recResponse);
+
+        mockMvc.perform(get("/api/v1/complaints/1/recommendation")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(100))
+                .andExpect(jsonPath("$.data.complaintId").value(1))
+                .andExpect(jsonPath("$.data.suggestedCategory").value("STREETLIGHTS_AND_ELECTRICITY"));
     }
 }

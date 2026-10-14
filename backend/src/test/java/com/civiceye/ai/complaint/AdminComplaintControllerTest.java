@@ -17,6 +17,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
+import com.civiceye.ai.ai.AiRecommendationService;
+import com.civiceye.ai.ai.dto.AiOverrideRequest;
 import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -29,6 +31,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -40,6 +43,9 @@ class AdminComplaintControllerTest {
 
     @Mock
     private AdminComplaintService adminComplaintService;
+
+    @Mock
+    private AiRecommendationService aiRecommendationService;
 
     @InjectMocks
     private AdminComplaintController adminComplaintController;
@@ -175,5 +181,42 @@ class AdminComplaintControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.status").value("ASSIGNED"))
                 .andExpect(jsonPath("$.data.departmentName").value("Public Works & Roads"));
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/admin/complaints/{id}/apply-recommendation returns assigned complaint")
+    void testApplyRecommendation_Success() throws Exception {
+        sampleResponse.setStatus(ComplaintStatus.ASSIGNED);
+        sampleResponse.setDepartmentName("Water Supply & Sewerage Board");
+        when(aiRecommendationService.applyRecommendation(eq(1L), any()))
+                .thenReturn(sampleResponse);
+
+        mockMvc.perform(post("/api/v1/admin/complaints/1/apply-recommendation")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("AI recommendation applied successfully in 1-click triage"))
+                .andExpect(jsonPath("$.data.status").value("ASSIGNED"));
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/admin/complaints/{id}/override-recommendation returns updated complaint")
+    void testOverrideRecommendation_Success() throws Exception {
+        sampleResponse.setStatus(ComplaintStatus.UNDER_REVIEW);
+        sampleResponse.setCategory(ComplaintCategory.STREETLIGHTS_AND_ELECTRICITY);
+        sampleResponse.setPriority(Priority.MEDIUM);
+
+        when(aiRecommendationService.overrideRecommendation(eq(1L), any(AiOverrideRequest.class), any()))
+                .thenReturn(sampleResponse);
+
+        AiOverrideRequest request = new AiOverrideRequest(ComplaintCategory.STREETLIGHTS_AND_ELECTRICITY, Priority.MEDIUM, 5L, "Incorrect category detected", "Overridden by admin");
+
+        mockMvc.perform(post("/api/v1/admin/complaints/1/override-recommendation")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("AI recommendation overridden successfully by administrator"))
+                .andExpect(jsonPath("$.data.category").value("STREETLIGHTS_AND_ELECTRICITY"));
     }
 }

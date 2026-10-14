@@ -1,5 +1,6 @@
 package com.civiceye.ai.complaint.dto;
 
+import com.civiceye.ai.ai.dto.AiRecommendationResponse;
 import com.civiceye.ai.complaint.Complaint;
 import com.civiceye.ai.complaint.ComplaintCategory;
 import com.civiceye.ai.complaint.ComplaintStatus;
@@ -39,6 +40,7 @@ public class ComplaintResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime resolvedAt;
+    private AiRecommendationResponse aiRecommendation;
 
     public ComplaintResponse() {
     }
@@ -82,6 +84,9 @@ public class ComplaintResponse {
         res.setCreatedAt(complaint.getCreatedAt());
         res.setUpdatedAt(complaint.getUpdatedAt());
         res.setResolvedAt(complaint.getResolvedAt());
+        if (complaint.getAiRecommendation() != null) {
+            res.setAiRecommendation(AiRecommendationResponse.fromEntity(complaint.getAiRecommendation()));
+        }
         return res;
     }
 
@@ -145,6 +150,8 @@ public class ComplaintResponse {
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
     public LocalDateTime getResolvedAt() { return resolvedAt; }
     public void setResolvedAt(LocalDateTime resolvedAt) { this.resolvedAt = resolvedAt; }
+    public AiRecommendationResponse getAiRecommendation() { return aiRecommendation; }
+    public void setAiRecommendation(AiRecommendationResponse aiRecommendation) { this.aiRecommendation = aiRecommendation; }
 
     public static ComplaintResponseBuilder builder() {
         return new ComplaintResponseBuilder();
@@ -181,6 +188,7 @@ public class ComplaintResponse {
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
         private LocalDateTime resolvedAt;
+        private AiRecommendationResponse aiRecommendation;
 
         public ComplaintResponseBuilder id(Long id) { this.id = id; return this; }
         public ComplaintResponseBuilder complaintNumber(String complaintNumber) { this.complaintNumber = complaintNumber; return this; }
@@ -212,6 +220,7 @@ public class ComplaintResponse {
         public ComplaintResponseBuilder createdAt(LocalDateTime createdAt) { this.createdAt = createdAt; return this; }
         public ComplaintResponseBuilder updatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; return this; }
         public ComplaintResponseBuilder resolvedAt(LocalDateTime resolvedAt) { this.resolvedAt = resolvedAt; return this; }
+        public ComplaintResponseBuilder aiRecommendation(AiRecommendationResponse aiRecommendation) { this.aiRecommendation = aiRecommendation; return this; }
 
         public ComplaintResponse build() {
             ComplaintResponse res = new ComplaintResponse();
@@ -245,6 +254,7 @@ public class ComplaintResponse {
             res.setCreatedAt(this.createdAt);
             res.setUpdatedAt(this.updatedAt);
             res.setResolvedAt(this.resolvedAt);
+            res.setAiRecommendation(this.aiRecommendation);
             return res;
         }
     }
