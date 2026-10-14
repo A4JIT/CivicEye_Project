@@ -273,3 +273,225 @@ VALUES
         CURRENT_TIMESTAMP - INTERVAL '6 hours'
     )
 ON CONFLICT (complaint_id) DO NOTHING;
+
+-- 6. Insert Phase 7 Benchmark Test Complaints (Targeting High-Risk Markers)
+INSERT INTO complaints (
+    complaint_number, title, description, category, status, priority,
+    location, latitude, longitude, citizen_id, department_id, assigned_to_id,
+    created_at, updated_at
+)
+VALUES
+    (
+        'CE-2026-0007',
+        'Collapsed Bridge section on Outer Ring Highway',
+        'Catastrophic collapsed bridge railing and cracked span near toll gate creating extreme hazard for highway commuters.',
+        'ROADS_AND_FOOTPATHS',
+        'SUBMITTED',
+        'CRITICAL',
+        'Outer Ring Highway, KM 14 Marker',
+        28.7000,
+        77.1000,
+        (SELECT id FROM users WHERE email = 'citizen@civiceye.com'),
+        (SELECT id FROM departments WHERE code = 'ROAD_WORKS'),
+        NULL,
+        CURRENT_TIMESTAMP - INTERVAL '1 day',
+        CURRENT_TIMESTAMP - INTERVAL '1 day'
+    ),
+    (
+        'CE-2026-0008',
+        'Live Electric Wire Sparking Near School Zone',
+        'Live electric wire hanging from storm damaged pole, sparking actively opposite Primary School entrance during heavy rain.',
+        'STREETLIGHTS_AND_ELECTRICITY',
+        'SUBMITTED',
+        'CRITICAL',
+        'Opposite St. Jude Primary School, Sector 8',
+        28.5500,
+        77.2500,
+        (SELECT id FROM users WHERE email = 'citizen@civiceye.com'),
+        (SELECT id FROM departments WHERE code = 'ELECTRICITY'),
+        NULL,
+        CURRENT_TIMESTAMP - INTERVAL '18 hours',
+        CURRENT_TIMESTAMP - INTERVAL '18 hours'
+    ),
+    (
+        'CE-2026-0009',
+        'Open Manhole and Sewage Leak in Market Area',
+        'Open manhole cover missing on main pedestrian path, contaminated sewage leak flooding sidewalk outside shopping plaza.',
+        'DRAINAGE_AND_SEWAGE',
+        'SUBMITTED',
+        'HIGH',
+        'Plaza Lane 3, City Shopping Arcade',
+        28.6200,
+        77.2100,
+        (SELECT id FROM users WHERE email = 'citizen@civiceye.com'),
+        (SELECT id FROM departments WHERE code = 'WATER_SUPPLY'),
+        NULL,
+        CURRENT_TIMESTAMP - INTERVAL '12 hours',
+        CURRENT_TIMESTAMP - INTERVAL '12 hours'
+    ),
+    (
+        'CE-2026-0010',
+        'Garbage Piling and Stench near Community Park',
+        'Municipal garbage piling up outside community park with overflowing bins and severe stench attracting stray animals.',
+        'GARBAGE_AND_CLEANLINESS',
+        'SUBMITTED',
+        'MEDIUM',
+        'Green Park Main Gate, Sector 15',
+        28.5800,
+        77.2000,
+        (SELECT id FROM users WHERE email = 'citizen@civiceye.com'),
+        (SELECT id FROM departments WHERE code = 'SOLID_WASTE'),
+        NULL,
+        CURRENT_TIMESTAMP - INTERVAL '6 hours',
+        CURRENT_TIMESTAMP - INTERVAL '6 hours'
+    )
+ON CONFLICT (complaint_number) DO NOTHING;
+
+-- 7. Insert AI Recommendations with Confidence Scoring & Audit Metadata
+INSERT INTO ai_recommendations (
+    complaint_id, suggested_category, suggested_priority, suggested_department_id,
+    confidence_score, explanation, is_overridden, overridden_by_user_id, overridden_at, override_reason, created_at, updated_at
+)
+VALUES
+    (
+        (SELECT id FROM complaints WHERE complaint_number = 'CE-2026-0001'),
+        'ROADS_AND_FOOTPATHS',
+        'HIGH',
+        (SELECT id FROM departments WHERE code = 'ROAD_WORKS'),
+        0.92,
+        'Classified as ROADS_AND_FOOTPATHS based on keywords: [pothole, hospital, traffic jam] with high urgency modifier.',
+        FALSE,
+        NULL,
+        NULL,
+        NULL,
+        CURRENT_TIMESTAMP - INTERVAL '2 days',
+        CURRENT_TIMESTAMP - INTERVAL '2 days'
+    ),
+    (
+        (SELECT id FROM complaints WHERE complaint_number = 'CE-2026-0002'),
+        'STREETLIGHTS_AND_ELECTRICITY',
+        'MEDIUM',
+        (SELECT id FROM departments WHERE code = 'ELECTRICITY'),
+        0.89,
+        'Classified as STREETLIGHTS_AND_ELECTRICITY based on keywords: [streetlight, dark street].',
+        FALSE,
+        NULL,
+        NULL,
+        NULL,
+        CURRENT_TIMESTAMP - INTERVAL '4 days',
+        CURRENT_TIMESTAMP - INTERVAL '4 days'
+    ),
+    (
+        (SELECT id FROM complaints WHERE complaint_number = 'CE-2026-0003'),
+        'ROADS_AND_FOOTPATHS',
+        'HIGH',
+        (SELECT id FROM departments WHERE code = 'ROAD_WORKS'),
+        0.91,
+        'Classified as ROADS_AND_FOOTPATHS based on keywords: [asphalt, road repair].',
+        FALSE,
+        NULL,
+        NULL,
+        NULL,
+        CURRENT_TIMESTAMP - INTERVAL '5 days',
+        CURRENT_TIMESTAMP - INTERVAL '5 days'
+    ),
+    (
+        (SELECT id FROM complaints WHERE complaint_number = 'CE-2026-0004'),
+        'GARBAGE_AND_CLEANLINESS',
+        'MEDIUM',
+        (SELECT id FROM departments WHERE code = 'SOLID_WASTE'),
+        0.94,
+        'Classified as GARBAGE_AND_CLEANLINESS based on keywords: [overflowing, waste container, foul odor].',
+        FALSE,
+        NULL,
+        NULL,
+        NULL,
+        CURRENT_TIMESTAMP - INTERVAL '7 days',
+        CURRENT_TIMESTAMP - INTERVAL '7 days'
+    ),
+    (
+        (SELECT id FROM complaints WHERE complaint_number = 'CE-2026-0005'),
+        'OTHER',
+        'LOW',
+        (SELECT id FROM departments WHERE code = 'ROAD_WORKS'),
+        0.65,
+        'No municipal civic keywords found; civil boundary dispute.',
+        TRUE,
+        (SELECT id FROM users WHERE email = 'admin@civiceye.com'),
+        CURRENT_TIMESTAMP - INTERVAL '3 days',
+        'Administrative override: Private civil boundary dispute outside municipal jurisdiction.',
+        CURRENT_TIMESTAMP - INTERVAL '8 days',
+        CURRENT_TIMESTAMP - INTERVAL '3 days'
+    ),
+    (
+        (SELECT id FROM complaints WHERE complaint_number = 'CE-2026-0006'),
+        'WATER_SUPPLY_AND_LEAKAGE',
+        'CRITICAL',
+        (SELECT id FROM departments WHERE code = 'WATER_SUPPLY'),
+        0.95,
+        'Classified as WATER_SUPPLY_AND_LEAKAGE based on critical hazard [pipe burst, drinking water, flooding].',
+        FALSE,
+        NULL,
+        NULL,
+        NULL,
+        CURRENT_TIMESTAMP - INTERVAL '1 day',
+        CURRENT_TIMESTAMP - INTERVAL '1 day'
+    ),
+    (
+        (SELECT id FROM complaints WHERE complaint_number = 'CE-2026-0007'),
+        'ROADS_AND_FOOTPATHS',
+        'CRITICAL',
+        (SELECT id FROM departments WHERE code = 'ROAD_WORKS'),
+        0.98,
+        'Classified as ROADS_AND_FOOTPATHS based on critical hazard: [collapsed bridge, highway].',
+        FALSE,
+        NULL,
+        NULL,
+        NULL,
+        CURRENT_TIMESTAMP - INTERVAL '1 day',
+        CURRENT_TIMESTAMP - INTERVAL '1 day'
+    ),
+    (
+        (SELECT id FROM complaints WHERE complaint_number = 'CE-2026-0008'),
+        'STREETLIGHTS_AND_ELECTRICITY',
+        'CRITICAL',
+        (SELECT id FROM departments WHERE code = 'ELECTRICITY'),
+        0.97,
+        'Classified as STREETLIGHTS_AND_ELECTRICITY based on critical hazard: [live electric wire, sparking, school zone].',
+        FALSE,
+        NULL,
+        NULL,
+        NULL,
+        CURRENT_TIMESTAMP - INTERVAL '18 hours',
+        CURRENT_TIMESTAMP - INTERVAL '18 hours'
+    ),
+    (
+        (SELECT id FROM complaints WHERE complaint_number = 'CE-2026-0009'),
+        'DRAINAGE_AND_SEWAGE',
+        'HIGH',
+        (SELECT id FROM departments WHERE code = 'WATER_SUPPLY'),
+        0.95,
+        'Classified as DRAINAGE_AND_SEWAGE based on keywords: [open manhole, sewage leak].',
+        FALSE,
+        NULL,
+        NULL,
+        NULL,
+        CURRENT_TIMESTAMP - INTERVAL '12 hours',
+        CURRENT_TIMESTAMP - INTERVAL '12 hours'
+    ),
+    (
+        (SELECT id FROM complaints WHERE complaint_number = 'CE-2026-0010'),
+        'GARBAGE_AND_CLEANLINESS',
+        'MEDIUM',
+        (SELECT id FROM departments WHERE code = 'SOLID_WASTE'),
+        0.93,
+        'Classified as GARBAGE_AND_CLEANLINESS based on keywords: [garbage piling, overflowing bin, stench].',
+        FALSE,
+        NULL,
+        NULL,
+        NULL,
+        CURRENT_TIMESTAMP - INTERVAL '6 hours',
+        CURRENT_TIMESTAMP - INTERVAL '6 hours'
+    )
+ON CONFLICT (complaint_id) DO NOTHING;
+
