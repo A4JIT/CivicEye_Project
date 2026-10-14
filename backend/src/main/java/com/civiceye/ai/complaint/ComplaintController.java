@@ -25,26 +25,36 @@ public class ComplaintController {
     private final ComplaintLifecycleService lifecycleService;
     private final AdminComplaintService adminComplaintService;
     private final AiRecommendationService aiRecommendationService;
+    private final FeedbackService feedbackService;
 
     public ComplaintController(ComplaintService complaintService) {
-        this(complaintService, null, null, null);
+        this(complaintService, null, null, null, null);
     }
 
     public ComplaintController(ComplaintService complaintService,
                                ComplaintLifecycleService lifecycleService,
                                AdminComplaintService adminComplaintService) {
-        this(complaintService, lifecycleService, adminComplaintService, null);
+        this(complaintService, lifecycleService, adminComplaintService, null, null);
+    }
+
+    public ComplaintController(ComplaintService complaintService,
+                               ComplaintLifecycleService lifecycleService,
+                               AdminComplaintService adminComplaintService,
+                               AiRecommendationService aiRecommendationService) {
+        this(complaintService, lifecycleService, adminComplaintService, aiRecommendationService, null);
     }
 
     @org.springframework.beans.factory.annotation.Autowired
     public ComplaintController(ComplaintService complaintService,
                                ComplaintLifecycleService lifecycleService,
                                AdminComplaintService adminComplaintService,
-                               AiRecommendationService aiRecommendationService) {
+                               AiRecommendationService aiRecommendationService,
+                               FeedbackService feedbackService) {
         this.complaintService = complaintService;
         this.lifecycleService = lifecycleService;
         this.adminComplaintService = adminComplaintService;
         this.aiRecommendationService = aiRecommendationService;
+        this.feedbackService = feedbackService;
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -186,32 +196,73 @@ public class ComplaintController {
 
     @PostMapping("/{id}/feedback")
     @PreAuthorize("hasAnyRole('CITIZEN', 'ADMIN')")
-    public ResponseEntity<ApiResponse<ComplaintFeedbackResponse>> submitFeedback(
+    public ResponseEntity<ApiResponse<FeedbackResponse>> submitFeedback(
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal currentUser,
-            @Valid @RequestBody ComplaintFeedbackRequest request) {
-        ComplaintFeedbackResponse response = lifecycleService.submitFeedback(id, request, currentUser);
+            @Valid @RequestBody SubmitFeedbackRequest request) {
+        FeedbackResponse response = feedbackService != null
+                ? feedbackService.submitFeedback(id, request, currentUser)
+                : null;
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Feedback submitted successfully", response));
     }
 
-    @PutMapping("/{id}/confirm-resolution")
+    @GetMapping("/{id}/feedback")
+    @PreAuthorize("hasAnyRole('CITIZEN', 'DEPARTMENT_USER', 'ADMIN')")
+    public ResponseEntity<ApiResponse<FeedbackResponse>> getFeedback(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal currentUser) {
+        FeedbackResponse response = feedbackService != null
+                ? feedbackService.getFeedbackByComplaintId(id, currentUser)
+                : null;
+        return ResponseEntity.ok(ApiResponse.success("Feedback retrieved successfully", response));
+    }
+
+    @PostMapping("/{id}/confirm-resolution")
     @PreAuthorize("hasAnyRole('CITIZEN', 'ADMIN')")
-    public ResponseEntity<ApiResponse<ComplaintResponse>> confirmResolution(
+    public ResponseEntity<ApiResponse<ComplaintResponse>> confirmResolutionPost(
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal currentUser,
             @RequestBody(required = false) ConfirmResolutionRequest request) {
-        ComplaintResponse response = lifecycleService.confirmResolution(id, request != null ? request : new ConfirmResolutionRequest(), currentUser);
+        ComplaintResponse response = lifecycleService != null
+                ? lifecycleService.confirmResolution(id, request != null ? request : new ConfirmResolutionRequest(), currentUser)
+                : null;
         return ResponseEntity.ok(ApiResponse.success("Complaint resolution confirmed and complaint closed", response));
+    }
+
+    @PutMapping("/{id}/confirm-resolution")
+    @PreAuthorize("hasAnyRole('CITIZEN', 'ADMIN')")
+    public ResponseEntity<ApiResponse<ComplaintResponse>> confirmResolutionPut(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal currentUser,
+            @RequestBody(required = false) ConfirmResolutionRequest request) {
+        ComplaintResponse response = lifecycleService != null
+                ? lifecycleService.confirmResolution(id, request != null ? request : new ConfirmResolutionRequest(), currentUser)
+                : null;
+        return ResponseEntity.ok(ApiResponse.success("Complaint resolution confirmed and complaint closed", response));
+    }
+
+    @PostMapping("/{id}/close")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<ComplaintResponse>> closeComplaintPost(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal currentUser,
+            @RequestBody(required = false) CloseComplaintRequest request) {
+        ComplaintResponse response = lifecycleService != null
+                ? lifecycleService.closeComplaint(id, request != null ? request : new CloseComplaintRequest(), currentUser)
+                : null;
+        return ResponseEntity.ok(ApiResponse.success("Complaint closed successfully", response));
     }
 
     @PutMapping("/{id}/close")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<ComplaintResponse>> closeComplaint(
+    public ResponseEntity<ApiResponse<ComplaintResponse>> closeComplaintPut(
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal currentUser,
             @RequestBody(required = false) CloseComplaintRequest request) {
-        ComplaintResponse response = lifecycleService.closeComplaint(id, request != null ? request : new CloseComplaintRequest(), currentUser);
+        ComplaintResponse response = lifecycleService != null
+                ? lifecycleService.closeComplaint(id, request != null ? request : new CloseComplaintRequest(), currentUser)
+                : null;
         return ResponseEntity.ok(ApiResponse.success("Complaint closed successfully", response));
     }
 }
