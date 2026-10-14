@@ -73,6 +73,7 @@ public class SecurityConfig {
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/dashboard/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/department/**").hasAnyRole("DEPARTMENT_USER", "ADMIN")
                         .requestMatchers("/api/dashboard/department/**").hasAnyRole("DEPARTMENT_USER", "ADMIN")
                         .requestMatchers("/api/dashboard/citizen/**").hasAnyRole("CITIZEN", "ADMIN")
                         .anyRequest().authenticated()
