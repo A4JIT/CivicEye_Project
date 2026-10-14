@@ -1,5 +1,6 @@
 package com.civiceye.ai.complaint;
 
+import com.civiceye.ai.ai.AiRecommendation;
 import com.civiceye.ai.department.Department;
 import com.civiceye.ai.user.User;
 import jakarta.persistence.*;
@@ -103,6 +104,9 @@ public class Complaint {
     @Column(name = "resolved_at")
     private LocalDateTime resolvedAt;
 
+    @OneToOne(mappedBy = "complaint", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private AiRecommendation aiRecommendation;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getComplaintNumber() { return complaintNumber; }
@@ -155,6 +159,13 @@ public class Complaint {
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
     public LocalDateTime getResolvedAt() { return resolvedAt; }
     public void setResolvedAt(LocalDateTime resolvedAt) { this.resolvedAt = resolvedAt; }
+    public AiRecommendation getAiRecommendation() { return aiRecommendation; }
+    public void setAiRecommendation(AiRecommendation aiRecommendation) {
+        this.aiRecommendation = aiRecommendation;
+        if (aiRecommendation != null && aiRecommendation.getComplaint() != this) {
+            aiRecommendation.setComplaint(this);
+        }
+    }
 
     @PrePersist
     protected void onCreate() {
@@ -207,6 +218,7 @@ public class Complaint {
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
         private LocalDateTime resolvedAt;
+        private AiRecommendation aiRecommendation;
 
         public ComplaintBuilder id(Long id) { this.id = id; return this; }
         public ComplaintBuilder complaintNumber(String complaintNumber) { this.complaintNumber = complaintNumber; return this; }
@@ -234,6 +246,7 @@ public class Complaint {
         public ComplaintBuilder createdAt(LocalDateTime createdAt) { this.createdAt = createdAt; return this; }
         public ComplaintBuilder updatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; return this; }
         public ComplaintBuilder resolvedAt(LocalDateTime resolvedAt) { this.resolvedAt = resolvedAt; return this; }
+        public ComplaintBuilder aiRecommendation(AiRecommendation aiRecommendation) { this.aiRecommendation = aiRecommendation; return this; }
 
         public Complaint build() {
             Complaint c = new Complaint();
@@ -263,6 +276,7 @@ public class Complaint {
             c.setCreatedAt(this.createdAt);
             c.setUpdatedAt(this.updatedAt);
             c.setResolvedAt(this.resolvedAt);
+            c.setAiRecommendation(this.aiRecommendation);
             return c;
         }
     }
