@@ -104,6 +104,23 @@ public class Complaint {
     @Column(name = "resolved_at")
     private LocalDateTime resolvedAt;
 
+    @Column(name = "closed_at")
+    private LocalDateTime closedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "closed_by_user_id")
+    private User closedBy;
+
+    @Column(name = "closure_remarks", columnDefinition = "TEXT")
+    private String closureRemarks;
+
+    @Column(name = "citizen_confirmed_resolution")
+    @Builder.Default
+    private Boolean citizenConfirmedResolution = false;
+
+    @OneToOne(mappedBy = "complaint", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private ComplaintFeedback feedback;
+
     @OneToOne(mappedBy = "complaint", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private AiRecommendation aiRecommendation;
 
@@ -159,6 +176,21 @@ public class Complaint {
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
     public LocalDateTime getResolvedAt() { return resolvedAt; }
     public void setResolvedAt(LocalDateTime resolvedAt) { this.resolvedAt = resolvedAt; }
+    public LocalDateTime getClosedAt() { return closedAt; }
+    public void setClosedAt(LocalDateTime closedAt) { this.closedAt = closedAt; }
+    public User getClosedBy() { return closedBy; }
+    public void setClosedBy(User closedBy) { this.closedBy = closedBy; }
+    public String getClosureRemarks() { return closureRemarks; }
+    public void setClosureRemarks(String closureRemarks) { this.closureRemarks = closureRemarks; }
+    public Boolean getCitizenConfirmedResolution() { return citizenConfirmedResolution; }
+    public void setCitizenConfirmedResolution(Boolean citizenConfirmedResolution) { this.citizenConfirmedResolution = citizenConfirmedResolution; }
+    public ComplaintFeedback getFeedback() { return feedback; }
+    public void setFeedback(ComplaintFeedback feedback) {
+        this.feedback = feedback;
+        if (feedback != null && feedback.getComplaint() != this) {
+            feedback.setComplaint(this);
+        }
+    }
     public AiRecommendation getAiRecommendation() { return aiRecommendation; }
     public void setAiRecommendation(AiRecommendation aiRecommendation) {
         this.aiRecommendation = aiRecommendation;
@@ -177,6 +209,9 @@ public class Complaint {
         if (this.priority == null) {
             this.priority = Priority.MEDIUM;
         }
+        if (this.citizenConfirmedResolution == null) {
+            this.citizenConfirmedResolution = false;
+        }
     }
 
     @PreUpdate
@@ -184,6 +219,9 @@ public class Complaint {
         this.updatedAt = LocalDateTime.now();
         if (this.status == ComplaintStatus.RESOLVED && this.resolvedAt == null) {
             this.resolvedAt = LocalDateTime.now();
+        }
+        if (this.status == ComplaintStatus.CLOSED && this.closedAt == null) {
+            this.closedAt = LocalDateTime.now();
         }
     }
 
@@ -218,6 +256,11 @@ public class Complaint {
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
         private LocalDateTime resolvedAt;
+        private LocalDateTime closedAt;
+        private User closedBy;
+        private String closureRemarks;
+        private Boolean citizenConfirmedResolution = false;
+        private ComplaintFeedback feedback;
         private AiRecommendation aiRecommendation;
 
         public ComplaintBuilder id(Long id) { this.id = id; return this; }
@@ -246,6 +289,11 @@ public class Complaint {
         public ComplaintBuilder createdAt(LocalDateTime createdAt) { this.createdAt = createdAt; return this; }
         public ComplaintBuilder updatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; return this; }
         public ComplaintBuilder resolvedAt(LocalDateTime resolvedAt) { this.resolvedAt = resolvedAt; return this; }
+        public ComplaintBuilder closedAt(LocalDateTime closedAt) { this.closedAt = closedAt; return this; }
+        public ComplaintBuilder closedBy(User closedBy) { this.closedBy = closedBy; return this; }
+        public ComplaintBuilder closureRemarks(String closureRemarks) { this.closureRemarks = closureRemarks; return this; }
+        public ComplaintBuilder citizenConfirmedResolution(Boolean citizenConfirmedResolution) { this.citizenConfirmedResolution = citizenConfirmedResolution; return this; }
+        public ComplaintBuilder feedback(ComplaintFeedback feedback) { this.feedback = feedback; return this; }
         public ComplaintBuilder aiRecommendation(AiRecommendation aiRecommendation) { this.aiRecommendation = aiRecommendation; return this; }
 
         public Complaint build() {
@@ -276,6 +324,11 @@ public class Complaint {
             c.setCreatedAt(this.createdAt);
             c.setUpdatedAt(this.updatedAt);
             c.setResolvedAt(this.resolvedAt);
+            c.setClosedAt(this.closedAt);
+            c.setClosedBy(this.closedBy);
+            c.setClosureRemarks(this.closureRemarks);
+            c.setCitizenConfirmedResolution(this.citizenConfirmedResolution != null ? this.citizenConfirmedResolution : false);
+            c.setFeedback(this.feedback);
             c.setAiRecommendation(this.aiRecommendation);
             return c;
         }

@@ -1,7 +1,11 @@
 package com.civiceye.ai.complaint;
 
+import com.civiceye.ai.department.Department;
 import com.civiceye.ai.user.User;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;
 
@@ -21,6 +25,13 @@ public class ComplaintFeedback {
     @JoinColumn(name = "citizen_id", nullable = false)
     private User citizen;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "department_id")
+    private Department department;
+
+    @NotNull
+    @Min(1)
+    @Max(5)
     @Column(nullable = false)
     private Integer rating;
 
@@ -33,13 +44,18 @@ public class ComplaintFeedback {
     public ComplaintFeedback() {
     }
 
-    public ComplaintFeedback(Long id, Complaint complaint, User citizen, Integer rating, String comments, LocalDateTime createdAt) {
+    public ComplaintFeedback(Long id, Complaint complaint, User citizen, Department department, Integer rating, String comments, LocalDateTime createdAt) {
         this.id = id;
         this.complaint = complaint;
         this.citizen = citizen;
+        this.department = department;
         this.rating = rating;
         this.comments = comments;
         this.createdAt = createdAt;
+    }
+
+    public ComplaintFeedback(Long id, Complaint complaint, User citizen, Integer rating, String comments, LocalDateTime createdAt) {
+        this(id, complaint, citizen, null, rating, comments, createdAt);
     }
 
     @PrePersist
@@ -71,6 +87,14 @@ public class ComplaintFeedback {
 
     public void setCitizen(User citizen) {
         this.citizen = citizen;
+    }
+
+    public Department getDepartment() {
+        return department;
+    }
+
+    public void setDepartment(Department department) {
+        this.department = department;
     }
 
     public Integer getRating() {
@@ -105,6 +129,7 @@ public class ComplaintFeedback {
         private Long id;
         private Complaint complaint;
         private User citizen;
+        private Department department;
         private Integer rating;
         private String comments;
         private LocalDateTime createdAt;
@@ -124,6 +149,11 @@ public class ComplaintFeedback {
             return this;
         }
 
+        public ComplaintFeedbackBuilder department(Department department) {
+            this.department = department;
+            return this;
+        }
+
         public ComplaintFeedbackBuilder rating(Integer rating) {
             this.rating = rating;
             return this;
@@ -140,7 +170,7 @@ public class ComplaintFeedback {
         }
 
         public ComplaintFeedback build() {
-            return new ComplaintFeedback(id, complaint, citizen, rating, comments, createdAt);
+            return new ComplaintFeedback(id, complaint, citizen, department, rating, comments, createdAt);
         }
     }
 }

@@ -1,9 +1,6 @@
 package com.civiceye.ai.complaint;
 
-import com.civiceye.ai.complaint.dto.AssignComplaintRequest;
-import com.civiceye.ai.complaint.dto.ComplaintResponse;
-import com.civiceye.ai.complaint.dto.StatusUpdateRequest;
-import com.civiceye.ai.complaint.dto.TimelineEventResponse;
+import com.civiceye.ai.complaint.dto.*;
 import com.civiceye.ai.department.Department;
 import com.civiceye.ai.department.DepartmentRepository;
 import com.civiceye.ai.exception.BadRequestException;
@@ -30,6 +27,7 @@ public class ComplaintLifecycleService {
     private final DepartmentRepository departmentRepository;
     private final UserRepository userRepository;
     private final FileStorageService fileStorageService;
+    private final ComplaintFeedbackRepository feedbackRepository;
 
     // Allowed transition map for standard workflow
     private static final Map<ComplaintStatus, Set<ComplaintStatus>> ALLOWED_TRANSITIONS = new EnumMap<>(ComplaintStatus.class);
@@ -71,11 +69,22 @@ public class ComplaintLifecycleService {
                                    DepartmentRepository departmentRepository,
                                    UserRepository userRepository,
                                    FileStorageService fileStorageService) {
+        this(complaintRepository, statusHistoryRepository, departmentRepository, userRepository, fileStorageService, null);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public ComplaintLifecycleService(ComplaintRepository complaintRepository,
+                                   ComplaintStatusHistoryRepository statusHistoryRepository,
+                                   DepartmentRepository departmentRepository,
+                                   UserRepository userRepository,
+                                   FileStorageService fileStorageService,
+                                   ComplaintFeedbackRepository feedbackRepository) {
         this.complaintRepository = complaintRepository;
         this.statusHistoryRepository = statusHistoryRepository;
         this.departmentRepository = departmentRepository;
         this.userRepository = userRepository;
         this.fileStorageService = fileStorageService;
+        this.feedbackRepository = feedbackRepository;
     }
 
     public void validateStatusTransition(ComplaintStatus currentStatus, ComplaintStatus newStatus, Role role) {
@@ -154,6 +163,12 @@ public class ComplaintLifecycleService {
         } else if (newStatus == ComplaintStatus.REJECTED) {
             if (request.getRemarks() != null && !request.getRemarks().isBlank()) {
                 complaint.setRejectionReason(request.getRemarks().trim());
+            }
+        } else if (newStatus == ComplaintStatus.CLOSED) {
+            complaint.setClosedAt(LocalDateTime.now());
+            complaint.setClosedBy(user);
+            if (request.getRemarks() != null && !request.getRemarks().isBlank()) {
+                complaint.setClosureRemarks(request.getRemarks().trim());
             }
         }
 
@@ -285,5 +300,148 @@ public class ComplaintLifecycleService {
                 return;
             }
         }
+    }
+
+    @Transactional
+    public ComplaintFeedbackResponse submitFeedback(Long complaintId, ComplaintFeedbackRequest request, UserPrincipal currentUser) {
+        if (currentUser == null) {
+            throw new UnauthorizedException("User session is unauthenticated");
+        }
+        Complaint complaint = complaintRepository.findById(complaintId)
+                .orElseThrow(() -> new ResourceNotFoundException("Complaint not found with id: " + complaintId));
+
+        if (currentUser.getRole() == Role.CITIZEN && !complaint.getCitizen().getId().equals(currentUser.getId())) {
+            throw new UnauthorizedException("Citizens can only submit feedback for their own complaints");
+        }
+
+        if (complaint.getStatus() != ComplaintStatus.RESOLVED && complaint.getStatus() != ComplaintStatus.CLOSED) {
+            throw new BadRequestException("Feedback can only be submitted for complaints in RESOLVED or CLOSED status");
+        }
+
+        if (request.getRating() == null || request.getRating() < 1 || request.getRating() > 5) {
+            throw new BadRequestException("Rating must be between 1 and 5 stars");
+        }
+
+        if (feedbackRepository != null && feedbackRepository.existsByComplaintId(complaintId)) {
+            throw new BadRequestException("Feedback has already been submitted for this complaint");
+        }
+
+        User citizen = userRepository.findById(currentUser.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + currentUser.getId()));
+
+        ComplaintFeedback feedback = ComplaintFeedback.builder()
+                .complaint(complaint)
+                .citizen(citizen)
+                .department(complaint.getDepartment())
+                .rating(request.getRating())
+                .comments(request.getComments() != null ? request.getComments().trim() : null)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        ComplaintFeedback saved = feedbackRepository != null ? feedbackRepository.save(feedback) : feedback;
+        complaint.setFeedback(saved);
+        complaintRepository.save(complaint);
+
+        return ComplaintFeedbackResponse.fromEntity(saved);
+    }
+
+    @Transactional
+    public ComplaintResponse confirmResolution(Long complaintId, ConfirmResolutionRequest request, UserPrincipal currentUser) {
+        if (currentUser == null) {
+            throw new UnauthorizedException("User session is unauthenticated");
+        }
+        Complaint complaint = complaintRepository.findById(complaintId)
+                .orElseThrow(() -> new ResourceNotFoundException("Complaint not found with id: " + complaintId));
+
+        if (currentUser.getRole() == Role.CITIZEN && !complaint.getCitizen().getId().equals(currentUser.getId())) {
+            throw new UnauthorizedException("Only the reporting citizen can confirm resolution of this complaint");
+        }
+
+        if (complaint.getStatus() != ComplaintStatus.RESOLVED) {
+            throw new BadRequestException("Only resolved complaints can have their resolution confirmed by citizen");
+        }
+
+        User actingUser = userRepository.findById(currentUser.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + currentUser.getId()));
+
+        ComplaintStatus oldStatus = complaint.getStatus();
+        complaint.setStatus(ComplaintStatus.CLOSED);
+        complaint.setCitizenConfirmedResolution(true);
+        complaint.setClosedAt(LocalDateTime.now());
+        if (request != null && request.getComments() != null && !request.getComments().isBlank()) {
+            complaint.setClosureRemarks(request.getComments().trim());
+        }
+
+        Complaint saved = complaintRepository.save(complaint);
+
+        if (request != null && request.getRating() != null && feedbackRepository != null && !feedbackRepository.existsByComplaintId(complaintId)) {
+            ComplaintFeedback feedback = ComplaintFeedback.builder()
+                    .complaint(saved)
+                    .citizen(actingUser)
+                    .department(saved.getDepartment())
+                    .rating(request.getRating())
+                    .comments(request.getComments() != null ? request.getComments().trim() : null)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+            ComplaintFeedback savedFeedback = feedbackRepository.save(feedback);
+            saved.setFeedback(savedFeedback);
+        }
+
+        ComplaintStatusHistory history = ComplaintStatusHistory.builder()
+                .complaint(saved)
+                .fromStatus(oldStatus)
+                .toStatus(ComplaintStatus.CLOSED)
+                .changedBy(actingUser)
+                .remarks(request != null && request.getComments() != null && !request.getComments().isBlank()
+                        ? request.getComments().trim()
+                        : "Citizen confirmed resolution. Complaint closed.")
+                .createdAt(LocalDateTime.now())
+                .build();
+        statusHistoryRepository.save(history);
+
+        return ComplaintResponse.fromEntity(saved);
+    }
+
+    @Transactional
+    public ComplaintResponse closeComplaint(Long complaintId, CloseComplaintRequest request, UserPrincipal currentUser) {
+        if (currentUser == null) {
+            throw new UnauthorizedException("User session is unauthenticated");
+        }
+        if (currentUser.getRole() != Role.ADMIN) {
+            throw new UnauthorizedException("Only administrators can formally close complaints without citizen confirmation");
+        }
+        Complaint complaint = complaintRepository.findById(complaintId)
+                .orElseThrow(() -> new ResourceNotFoundException("Complaint not found with id: " + complaintId));
+
+        if (complaint.getStatus() != ComplaintStatus.RESOLVED) {
+            throw new BadRequestException("Only complaints in RESOLVED status can be closed");
+        }
+
+        User admin = userRepository.findById(currentUser.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + currentUser.getId()));
+
+        ComplaintStatus oldStatus = complaint.getStatus();
+        complaint.setStatus(ComplaintStatus.CLOSED);
+        complaint.setClosedBy(admin);
+        complaint.setClosedAt(LocalDateTime.now());
+        if (request != null && request.getClosureRemarks() != null && !request.getClosureRemarks().isBlank()) {
+            complaint.setClosureRemarks(request.getClosureRemarks().trim());
+        }
+
+        Complaint saved = complaintRepository.save(complaint);
+
+        ComplaintStatusHistory history = ComplaintStatusHistory.builder()
+                .complaint(saved)
+                .fromStatus(oldStatus)
+                .toStatus(ComplaintStatus.CLOSED)
+                .changedBy(admin)
+                .remarks(request != null && request.getClosureRemarks() != null && !request.getClosureRemarks().isBlank()
+                        ? request.getClosureRemarks().trim()
+                        : "Administrative complaint closure.")
+                .createdAt(LocalDateTime.now())
+                .build();
+        statusHistoryRepository.save(history);
+
+        return ComplaintResponse.fromEntity(saved);
     }
 }

@@ -1,12 +1,7 @@
 package com.civiceye.ai.complaint;
 
 import com.civiceye.ai.common.ApiResponse;
-import com.civiceye.ai.complaint.dto.AssignComplaintRequest;
-import com.civiceye.ai.complaint.dto.ComplaintResponse;
-import com.civiceye.ai.complaint.dto.CreateComplaintRequest;
-import com.civiceye.ai.complaint.dto.ProvideInfoRequest;
-import com.civiceye.ai.complaint.dto.StatusUpdateRequest;
-import com.civiceye.ai.complaint.dto.TimelineEventResponse;
+import com.civiceye.ai.complaint.dto.*;
 import com.civiceye.ai.security.UserPrincipal;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -187,5 +182,36 @@ public class ComplaintController {
         }
         AiRecommendationResponse response = aiRecommendationService.getComplaintRecommendation(id, currentUser);
         return ResponseEntity.ok(ApiResponse.success("AI recommendation retrieved successfully", response));
+    }
+
+    @PostMapping("/{id}/feedback")
+    @PreAuthorize("hasAnyRole('CITIZEN', 'ADMIN')")
+    public ResponseEntity<ApiResponse<ComplaintFeedbackResponse>> submitFeedback(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal currentUser,
+            @Valid @RequestBody ComplaintFeedbackRequest request) {
+        ComplaintFeedbackResponse response = lifecycleService.submitFeedback(id, request, currentUser);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Feedback submitted successfully", response));
+    }
+
+    @PutMapping("/{id}/confirm-resolution")
+    @PreAuthorize("hasAnyRole('CITIZEN', 'ADMIN')")
+    public ResponseEntity<ApiResponse<ComplaintResponse>> confirmResolution(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal currentUser,
+            @RequestBody(required = false) ConfirmResolutionRequest request) {
+        ComplaintResponse response = lifecycleService.confirmResolution(id, request != null ? request : new ConfirmResolutionRequest(), currentUser);
+        return ResponseEntity.ok(ApiResponse.success("Complaint resolution confirmed and complaint closed", response));
+    }
+
+    @PutMapping("/{id}/close")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<ComplaintResponse>> closeComplaint(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal currentUser,
+            @RequestBody(required = false) CloseComplaintRequest request) {
+        ComplaintResponse response = lifecycleService.closeComplaint(id, request != null ? request : new CloseComplaintRequest(), currentUser);
+        return ResponseEntity.ok(ApiResponse.success("Complaint closed successfully", response));
     }
 }

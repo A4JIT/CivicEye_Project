@@ -40,6 +40,13 @@ public class ComplaintResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime resolvedAt;
+    private LocalDateTime closedAt;
+    private Long closedById;
+    private String closedByName;
+    private String closureRemarks;
+    private Boolean citizenConfirmedResolution;
+    private Integer feedbackRating;
+    private String feedbackComments;
     private AiRecommendationResponse aiRecommendation;
 
     public ComplaintResponse() {
@@ -84,6 +91,17 @@ public class ComplaintResponse {
         res.setCreatedAt(complaint.getCreatedAt());
         res.setUpdatedAt(complaint.getUpdatedAt());
         res.setResolvedAt(complaint.getResolvedAt());
+        res.setClosedAt(complaint.getClosedAt());
+        if (complaint.getClosedBy() != null) {
+            res.setClosedById(complaint.getClosedBy().getId());
+            res.setClosedByName(complaint.getClosedBy().getFullName());
+        }
+        res.setClosureRemarks(complaint.getClosureRemarks());
+        res.setCitizenConfirmedResolution(complaint.getCitizenConfirmedResolution() != null ? complaint.getCitizenConfirmedResolution() : false);
+        if (complaint.getFeedback() != null) {
+            res.setFeedbackRating(complaint.getFeedback().getRating());
+            res.setFeedbackComments(complaint.getFeedback().getComments());
+        }
         if (complaint.getAiRecommendation() != null) {
             res.setAiRecommendation(AiRecommendationResponse.fromEntity(complaint.getAiRecommendation()));
         }
@@ -150,6 +168,20 @@ public class ComplaintResponse {
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
     public LocalDateTime getResolvedAt() { return resolvedAt; }
     public void setResolvedAt(LocalDateTime resolvedAt) { this.resolvedAt = resolvedAt; }
+    public LocalDateTime getClosedAt() { return closedAt; }
+    public void setClosedAt(LocalDateTime closedAt) { this.closedAt = closedAt; }
+    public Long getClosedById() { return closedById; }
+    public void setClosedById(Long closedById) { this.closedById = closedById; }
+    public String getClosedByName() { return closedByName; }
+    public void setClosedByName(String closedByName) { this.closedByName = closedByName; }
+    public String getClosureRemarks() { return closureRemarks; }
+    public void setClosureRemarks(String closureRemarks) { this.closureRemarks = closureRemarks; }
+    public Boolean getCitizenConfirmedResolution() { return citizenConfirmedResolution; }
+    public void setCitizenConfirmedResolution(Boolean citizenConfirmedResolution) { this.citizenConfirmedResolution = citizenConfirmedResolution; }
+    public Integer getFeedbackRating() { return feedbackRating; }
+    public void setFeedbackRating(Integer feedbackRating) { this.feedbackRating = feedbackRating; }
+    public String getFeedbackComments() { return feedbackComments; }
+    public void setFeedbackComments(String feedbackComments) { this.feedbackComments = feedbackComments; }
     public AiRecommendationResponse getAiRecommendation() { return aiRecommendation; }
     public void setAiRecommendation(AiRecommendationResponse aiRecommendation) { this.aiRecommendation = aiRecommendation; }
 
@@ -188,6 +220,13 @@ public class ComplaintResponse {
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
         private LocalDateTime resolvedAt;
+        private LocalDateTime closedAt;
+        private Long closedById;
+        private String closedByName;
+        private String closureRemarks;
+        private Boolean citizenConfirmedResolution = false;
+        private Integer feedbackRating;
+        private String feedbackComments;
         private AiRecommendationResponse aiRecommendation;
 
         public ComplaintResponseBuilder id(Long id) { this.id = id; return this; }
@@ -220,6 +259,13 @@ public class ComplaintResponse {
         public ComplaintResponseBuilder createdAt(LocalDateTime createdAt) { this.createdAt = createdAt; return this; }
         public ComplaintResponseBuilder updatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; return this; }
         public ComplaintResponseBuilder resolvedAt(LocalDateTime resolvedAt) { this.resolvedAt = resolvedAt; return this; }
+        public ComplaintResponseBuilder closedAt(LocalDateTime closedAt) { this.closedAt = closedAt; return this; }
+        public ComplaintResponseBuilder closedById(Long closedById) { this.closedById = closedById; return this; }
+        public ComplaintResponseBuilder closedByName(String closedByName) { this.closedByName = closedByName; return this; }
+        public ComplaintResponseBuilder closureRemarks(String closureRemarks) { this.closureRemarks = closureRemarks; return this; }
+        public ComplaintResponseBuilder citizenConfirmedResolution(Boolean citizenConfirmedResolution) { this.citizenConfirmedResolution = citizenConfirmedResolution; return this; }
+        public ComplaintResponseBuilder feedbackRating(Integer feedbackRating) { this.feedbackRating = feedbackRating; return this; }
+        public ComplaintResponseBuilder feedbackComments(String feedbackComments) { this.feedbackComments = feedbackComments; return this; }
         public ComplaintResponseBuilder aiRecommendation(AiRecommendationResponse aiRecommendation) { this.aiRecommendation = aiRecommendation; return this; }
 
         public ComplaintResponse build() {
@@ -254,6 +300,13 @@ public class ComplaintResponse {
             res.setCreatedAt(this.createdAt);
             res.setUpdatedAt(this.updatedAt);
             res.setResolvedAt(this.resolvedAt);
+            res.setClosedAt(this.closedAt);
+            res.setClosedById(this.closedById);
+            res.setClosedByName(this.closedByName);
+            res.setClosureRemarks(this.closureRemarks);
+            res.setCitizenConfirmedResolution(this.citizenConfirmedResolution != null ? this.citizenConfirmedResolution : false);
+            res.setFeedbackRating(this.feedbackRating);
+            res.setFeedbackComments(this.feedbackComments);
             res.setAiRecommendation(this.aiRecommendation);
             return res;
         }
