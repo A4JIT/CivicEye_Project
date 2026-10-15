@@ -1,6 +1,7 @@
 package com.civiceye.ai.complaint;
 
 import com.civiceye.ai.user.User;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -15,6 +16,7 @@ public class ComplaintStatusHistory {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "complaint_id", nullable = false)
+    @JsonIgnore
     private Complaint complaint;
 
     @Enumerated(EnumType.STRING)

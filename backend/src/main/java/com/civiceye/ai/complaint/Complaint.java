@@ -7,6 +7,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "complaints")
@@ -124,6 +126,16 @@ public class Complaint {
     @OneToOne(mappedBy = "complaint", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private AiRecommendation aiRecommendation;
 
+    @OneToMany(mappedBy = "complaint", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderBy("createdAt ASC")
+    @Builder.Default
+    private List<ComplaintStatusHistory> statusHistory = new ArrayList<>();
+
+    @OneToMany(mappedBy = "complaint", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderBy("createdAt ASC")
+    @Builder.Default
+    private List<ComplaintAssignment> assignments = new ArrayList<>();
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getComplaintNumber() { return complaintNumber; }
@@ -199,6 +211,44 @@ public class Complaint {
         }
     }
 
+    public List<ComplaintStatusHistory> getStatusHistory() {
+        if (statusHistory == null) {
+            statusHistory = new ArrayList<>();
+        }
+        return statusHistory;
+    }
+
+    public void setStatusHistory(List<ComplaintStatusHistory> statusHistory) {
+        this.statusHistory = statusHistory != null ? statusHistory : new ArrayList<>();
+    }
+
+    public void addStatusHistory(ComplaintStatusHistory history) {
+        if (this.statusHistory == null) {
+            this.statusHistory = new ArrayList<>();
+        }
+        this.statusHistory.add(history);
+        history.setComplaint(this);
+    }
+
+    public List<ComplaintAssignment> getAssignments() {
+        if (assignments == null) {
+            assignments = new ArrayList<>();
+        }
+        return assignments;
+    }
+
+    public void setAssignments(List<ComplaintAssignment> assignments) {
+        this.assignments = assignments != null ? assignments : new ArrayList<>();
+    }
+
+    public void addAssignment(ComplaintAssignment assignment) {
+        if (this.assignments == null) {
+            this.assignments = new ArrayList<>();
+        }
+        this.assignments.add(assignment);
+        assignment.setComplaint(this);
+    }
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
@@ -262,6 +312,8 @@ public class Complaint {
         private Boolean citizenConfirmedResolution = false;
         private ComplaintFeedback feedback;
         private AiRecommendation aiRecommendation;
+        private List<ComplaintStatusHistory> statusHistory = new ArrayList<>();
+        private List<ComplaintAssignment> assignments = new ArrayList<>();
 
         public ComplaintBuilder id(Long id) { this.id = id; return this; }
         public ComplaintBuilder complaintNumber(String complaintNumber) { this.complaintNumber = complaintNumber; return this; }
@@ -295,6 +347,14 @@ public class Complaint {
         public ComplaintBuilder citizenConfirmedResolution(Boolean citizenConfirmedResolution) { this.citizenConfirmedResolution = citizenConfirmedResolution; return this; }
         public ComplaintBuilder feedback(ComplaintFeedback feedback) { this.feedback = feedback; return this; }
         public ComplaintBuilder aiRecommendation(AiRecommendation aiRecommendation) { this.aiRecommendation = aiRecommendation; return this; }
+        public ComplaintBuilder statusHistory(List<ComplaintStatusHistory> statusHistory) {
+            this.statusHistory = statusHistory != null ? statusHistory : new ArrayList<>();
+            return this;
+        }
+        public ComplaintBuilder assignments(List<ComplaintAssignment> assignments) {
+            this.assignments = assignments != null ? assignments : new ArrayList<>();
+            return this;
+        }
 
         public Complaint build() {
             Complaint c = new Complaint();
@@ -330,6 +390,8 @@ public class Complaint {
             c.setCitizenConfirmedResolution(this.citizenConfirmedResolution != null ? this.citizenConfirmedResolution : false);
             c.setFeedback(this.feedback);
             c.setAiRecommendation(this.aiRecommendation);
+            c.setStatusHistory(this.statusHistory != null ? this.statusHistory : new ArrayList<>());
+            c.setAssignments(this.assignments != null ? this.assignments : new ArrayList<>());
             return c;
         }
     }
