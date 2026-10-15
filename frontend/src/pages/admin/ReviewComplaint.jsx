@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import adminService from '../../services/adminService'
 import aiService from '../../services/aiService'
+import feedbackService from '../../services/feedbackService'
 import ComplaintStatusBadge from '../../components/complaints/ComplaintStatusBadge'
 import Modal from '../../components/common/Modal'
 import Loader from '../../components/common/Loader'
@@ -73,6 +74,12 @@ const ReviewComplaint = ({ complaintProp, onUpdated, onClose, isDrawer = false }
   const [assignDeptId, setAssignDeptId] = useState('')
   const [assignPriority, setAssignPriority] = useState('')
   const [assignInstructions, setAssignInstructions] = useState('')
+
+  // Phase 8: Complaint Closure Modal States
+  const [showCloseModal, setShowCloseModal] = useState(false)
+  const [closureRemarks, setClosureRemarks] = useState('')
+  const [closeLoading, setCloseLoading] = useState(false)
+  const [closeError, setCloseError] = useState('')
 
   useEffect(() => {
     let isMounted = true
@@ -318,6 +325,33 @@ const ReviewComplaint = ({ complaintProp, onUpdated, onClose, isDrawer = false }
     }
   }
 
+  // Phase 8: Administrator Close Complaint Submit
+  const handleCloseComplaintSubmit = async () => {
+    setCloseLoading(true)
+    setCloseError('')
+    try {
+      const payload = {
+        closureRemarks: closureRemarks.trim() || undefined,
+      }
+      const response = await feedbackService.closeComplaint(complaint.id, payload)
+      const updated = response?.data || response || {
+        ...complaint,
+        status: 'CLOSED',
+        closedAt: new Date().toISOString(),
+        closureRemarks: closureRemarks.trim(),
+      }
+      setComplaint(updated)
+      setShowCloseModal(false)
+      setSuccessMessage('Complaint has been closed successfully by administrator.')
+      if (onUpdated) onUpdated(updated)
+    } catch (err) {
+      console.error('Failed to close complaint:', err)
+      setCloseError(err.response?.data?.message || err.message || 'Failed to close complaint.')
+    } finally {
+      setCloseLoading(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="review-loading-card" data-testid="review-loading">
@@ -440,6 +474,47 @@ const ReviewComplaint = ({ complaintProp, onUpdated, onClose, isDrawer = false }
             <div className="triage-card card-needsinfo-banner" data-testid="needs-info-box">
               <h4 className="card-heading heading-needsinfo">❓ Information Request Notice</h4>
               <p className="needsinfo-text">{complaint.needsInfoRemarks}</p>
+            </div>
+          )}
+
+          {/* Phase 8: Citizen Satisfaction & Feedback Display */}
+          {(complaint.feedbackRating || complaint.feedbackComments) && (
+            <div className="triage-card card-citizen-feedback" data-testid="citizen-feedback-box">
+              <div className="citizen-feedback-header">
+                <span className="feedback-star-icon">⭐</span>
+                <h4 className="card-heading">Citizen Satisfaction & Feedback</h4>
+                <span className="badge badge-star-rating" data-testid="citizen-star-badge">
+                  {'★'.repeat(complaint.feedbackRating || 5)}{'☆'.repeat(5 - (complaint.feedbackRating || 5))} ({complaint.feedbackRating || 5}/5)
+                </span>
+              </div>
+              {complaint.feedbackComments ? (
+                <p className="citizen-feedback-quote" data-testid="citizen-feedback-comments">
+                  "{complaint.feedbackComments}"
+                </p>
+              ) : (
+                <p className="citizen-feedback-quote text-muted">Feedback rating submitted without qualitative comment.</p>
+              )}
+              <div className="citizen-feedback-meta">
+                <span>Citizen: {complaint.citizenName || 'Verified Citizen'}</span>
+                {complaint.citizenConfirmedResolution && (
+                  <span className="confirmed-check">✓ Resolution Confirmed by Citizen</span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Phase 8: Closed Complaint Status Banner */}
+          {complaint.status === 'CLOSED' && (
+            <div className="triage-card card-closed-banner" data-testid="complaint-closed-box">
+              <h4 className="card-heading heading-closed">🔒 Closed Grievance Ticket</h4>
+              <p className="closed-meta-text">
+                Status: CLOSED {complaint.closedAt ? `on ${new Date(complaint.closedAt).toLocaleDateString()}` : ''}
+              </p>
+              {complaint.closureRemarks && (
+                <p className="closed-remarks-text">
+                  <strong>Closure Remarks:</strong> {complaint.closureRemarks}
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -726,6 +801,17 @@ const ReviewComplaint = ({ complaintProp, onUpdated, onClose, isDrawer = false }
               >
                 ❌ Reject Complaint with Reason
               </button>
+
+              {complaint.status !== 'CLOSED' && (
+                <button
+                  type="button"
+                  className="btn btn-action-dispatch btn-close-complaint"
+                  onClick={() => setShowCloseModal(true)}
+                  data-testid="btn-open-close-modal"
+                >
+                  🔒 Close Complaint
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -917,6 +1003,51 @@ const ReviewComplaint = ({ complaintProp, onUpdated, onClose, isDrawer = false }
               value={assignInstructions}
               onChange={(e) => setAssignInstructions(e.target.value)}
               data-testid="textarea-assign-instructions"
+            />
+          </div>
+        </div>
+      </Modal>
+
+      {/* 4. Close Complaint Modal (Phase 8) */}
+      <Modal
+        isOpen={showCloseModal}
+        onClose={() => setShowCloseModal(false)}
+        title={`Close Grievance ${complaint?.complaintNumber}`}
+        footer={
+          <>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setShowCloseModal(false)}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="btn btn-primary btn-confirm-close"
+              disabled={closeLoading}
+              onClick={handleCloseComplaintSubmit}
+              data-testid="btn-confirm-close-complaint"
+            >
+              {closeLoading ? 'Closing...' : '🔒 Confirm Close Complaint'}
+            </button>
+          </>
+        }
+      >
+        <div className="modal-inner-form">
+          {closeError && <div className="alert alert-error">{closeError}</div>}
+          <p className="modal-instruction-text">
+            Closing this grievance marks it officially resolved and archived in the municipal records.
+          </p>
+          <div className="form-group">
+            <label className="form-label">Administrative Closure Remarks (Optional)</label>
+            <textarea
+              className="form-textarea"
+              rows={3}
+              placeholder="Record verification notes, citizen interaction summary, or closure notes..."
+              value={closureRemarks}
+              onChange={(e) => setClosureRemarks(e.target.value)}
+              data-testid="input-closure-remarks"
             />
           </div>
         </div>
