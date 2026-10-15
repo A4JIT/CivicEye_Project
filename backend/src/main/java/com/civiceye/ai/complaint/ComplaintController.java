@@ -26,22 +26,31 @@ public class ComplaintController {
     private final AdminComplaintService adminComplaintService;
     private final AiRecommendationService aiRecommendationService;
     private final FeedbackService feedbackService;
+    private final ComplaintHistoryService historyService;
 
     public ComplaintController(ComplaintService complaintService) {
-        this(complaintService, null, null, null, null);
+        this(complaintService, null, null, null, null, null);
     }
 
     public ComplaintController(ComplaintService complaintService,
                                ComplaintLifecycleService lifecycleService,
                                AdminComplaintService adminComplaintService) {
-        this(complaintService, lifecycleService, adminComplaintService, null, null);
+        this(complaintService, lifecycleService, adminComplaintService, null, null, null);
     }
 
     public ComplaintController(ComplaintService complaintService,
                                ComplaintLifecycleService lifecycleService,
                                AdminComplaintService adminComplaintService,
                                AiRecommendationService aiRecommendationService) {
-        this(complaintService, lifecycleService, adminComplaintService, aiRecommendationService, null);
+        this(complaintService, lifecycleService, adminComplaintService, aiRecommendationService, null, null);
+    }
+
+    public ComplaintController(ComplaintService complaintService,
+                               ComplaintLifecycleService lifecycleService,
+                               AdminComplaintService adminComplaintService,
+                               AiRecommendationService aiRecommendationService,
+                               FeedbackService feedbackService) {
+        this(complaintService, lifecycleService, adminComplaintService, aiRecommendationService, feedbackService, null);
     }
 
     @org.springframework.beans.factory.annotation.Autowired
@@ -49,12 +58,14 @@ public class ComplaintController {
                                ComplaintLifecycleService lifecycleService,
                                AdminComplaintService adminComplaintService,
                                AiRecommendationService aiRecommendationService,
-                               FeedbackService feedbackService) {
+                               FeedbackService feedbackService,
+                               ComplaintHistoryService historyService) {
         this.complaintService = complaintService;
         this.lifecycleService = lifecycleService;
         this.adminComplaintService = adminComplaintService;
         this.aiRecommendationService = aiRecommendationService;
         this.feedbackService = feedbackService;
+        this.historyService = historyService;
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -264,5 +275,29 @@ public class ComplaintController {
                 ? lifecycleService.closeComplaint(id, request != null ? request : new CloseComplaintRequest(), currentUser)
                 : null;
         return ResponseEntity.ok(ApiResponse.success("Complaint closed successfully", response));
+    }
+
+    @GetMapping("/{id}/history")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<ComplaintTimelineResponse>> getComplaintHistory(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal currentUser) {
+        if (historyService == null) {
+            return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+        }
+        ComplaintTimelineResponse response = historyService.getComplaintHistory(id, currentUser);
+        return ResponseEntity.ok(ApiResponse.success("Complaint history and timeline retrieved successfully", response));
+    }
+
+    @GetMapping("/{id}/assignments")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<List<ComplaintAssignmentResponse>>> getComplaintAssignments(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal currentUser) {
+        if (historyService == null) {
+            return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+        }
+        List<ComplaintAssignmentResponse> response = historyService.getAssignmentHistory(id, currentUser);
+        return ResponseEntity.ok(ApiResponse.success("Complaint assignment history retrieved successfully", response));
     }
 }
