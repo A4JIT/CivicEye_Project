@@ -7,6 +7,8 @@ import ComplaintStatusBadge from '../../components/complaints/ComplaintStatusBad
 import ReviewComplaint from './ReviewComplaint'
 import Loader from '../../components/common/Loader'
 import Modal from '../../components/common/Modal'
+import ComplaintAuditTimeline from '../../components/complaints/ComplaintAuditTimeline'
+import historyService from '../../services/historyService'
 
 const STATUS_TABS = [
   { id: 'ALL', label: 'All Complaints', icon: '📑' },
@@ -38,6 +40,13 @@ const PRIORITY_FILTER_OPTIONS = [
   { value: 'LOW', label: 'Low Urgency' },
 ]
 
+const PRIORITY_WEIGHTS = {
+  CRITICAL: 4,
+  HIGH: 3,
+  MEDIUM: 2,
+  LOW: 1,
+}
+
 const AllComplaints = () => {
   const [complaints, setComplaints] = useState([])
   const [loading, setLoading] = useState(true)
@@ -50,6 +59,13 @@ const AllComplaints = () => {
   const [categoryFilter, setCategoryFilter] = useState('ALL')
   const [priorityFilter, setPriorityFilter] = useState('ALL')
   const [deptFilter, setDeptFilter] = useState('ALL')
+
+  // Phase 9: Date Range & Sorting States
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
+  const [sortBy, setSortBy] = useState('createdAt')
+  const [sortDir, setSortDir] = useState('desc')
+  const [auditModalComplaint, setAuditModalComplaint] = useState(null)
 
   // Selected Complaint for Drawer Review
   const [selectedComplaint, setSelectedComplaint] = useState(null)
@@ -99,9 +115,9 @@ const AllComplaints = () => {
     return counts
   }, [complaints])
 
-  // Filtered complaint list
+  // Filtered and sorted complaint list
   const filteredComplaints = useMemo(() => {
-    return complaints.filter((item) => {
+    const list = complaints.filter((item) => {
       // 1. Status Filter
       if (activeStatusTab !== 'ALL' && item.status !== activeStatusTab) {
         return false
@@ -122,7 +138,19 @@ const AllComplaints = () => {
         return false
       }
 
-      // 5. Search Query
+      // 5. Date Range Filter
+      if (startDate && item.createdAt) {
+        const itemDate = new Date(item.createdAt)
+        const filterStart = new Date(startDate + 'T00:00:00')
+        if (itemDate < filterStart) return false
+      }
+      if (endDate && item.createdAt) {
+        const itemDate = new Date(item.createdAt)
+        const filterEnd = new Date(endDate + 'T23:59:59')
+        if (itemDate > filterEnd) return false
+      }
+
+      // 6. Search Query
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim()
         const matchNumber = item.complaintNumber?.toLowerCase().includes(q)
@@ -137,7 +165,53 @@ const AllComplaints = () => {
 
       return true
     })
-  }, [complaints, activeStatusTab, categoryFilter, priorityFilter, deptFilter, searchQuery])
+
+    return list.sort((a, b) => {
+      let comparison = 0
+      if (sortBy === 'priority') {
+        const wa = PRIORITY_WEIGHTS[a.priority] || 0
+        const wb = PRIORITY_WEIGHTS[b.priority] || 0
+        comparison = wa - wb
+      } else if (sortBy === 'updatedAt') {
+        comparison = new Date(a.updatedAt || 0) - new Date(b.updatedAt || 0)
+      } else if (sortBy === 'status') {
+        comparison = (a.status || '').localeCompare(b.status || '')
+      } else {
+        // Default: createdAt
+        comparison = new Date(a.createdAt || 0) - new Date(b.createdAt || 0)
+      }
+      return sortDir === 'asc' ? comparison : -comparison
+    })
+  }, [
+    complaints,
+    activeStatusTab,
+    categoryFilter,
+    priorityFilter,
+    deptFilter,
+    startDate,
+    endDate,
+    searchQuery,
+    sortBy,
+    sortDir,
+  ])
+
+  // Live KPI Summary Metrics for Monitoring Console
+  const kpiMetrics = useMemo(() => {
+    return {
+      total: complaints.length,
+      filtered: filteredComplaints.length,
+      critical: complaints.filter((c) => c.priority === 'CRITICAL').length,
+      unassigned: complaints.filter(
+        (c) => !c.departmentId && c.status !== 'REJECTED' && c.status !== 'CLOSED'
+      ).length,
+      inProgress: complaints.filter(
+        (c) => c.status === 'IN_PROGRESS' || c.status === 'ASSIGNED'
+      ).length,
+      resolvedClosed: complaints.filter(
+        (c) => c.status === 'RESOLVED' || c.status === 'CLOSED'
+      ).length,
+    }
+  }, [complaints, filteredComplaints])
 
   const handleComplaintUpdated = (updated) => {
     setComplaints((prev) =>
@@ -259,6 +333,45 @@ const AllComplaints = () => {
           </div>
         )}
 
+        {/* Phase 9: Municipal Monitoring Executive KPI Summary Bar */}
+        <div className="monitoring-summary-grid" data-testid="monitoring-summary-bar">
+          <div className="monitoring-kpi-card">
+            <span className="monitoring-kpi-icon">📊</span>
+            <div className="monitoring-kpi-details">
+              <span className="monitoring-kpi-count" data-testid="kpi-total-count">{kpiMetrics.total}</span>
+              <span className="monitoring-kpi-label">Total Grievances ({kpiMetrics.filtered} matching)</span>
+            </div>
+          </div>
+          <div className="monitoring-kpi-card">
+            <span className="monitoring-kpi-icon">⚠️</span>
+            <div className="monitoring-kpi-details">
+              <span className="monitoring-kpi-count" data-testid="kpi-critical-count">{kpiMetrics.critical}</span>
+              <span className="monitoring-kpi-label">Critical Urgency</span>
+            </div>
+          </div>
+          <div className="monitoring-kpi-card">
+            <span className="monitoring-kpi-icon">🏢</span>
+            <div className="monitoring-kpi-details">
+              <span className="monitoring-kpi-count" data-testid="kpi-unassigned-count">{kpiMetrics.unassigned}</span>
+              <span className="monitoring-kpi-label">Unassigned Route</span>
+            </div>
+          </div>
+          <div className="monitoring-kpi-card">
+            <span className="monitoring-kpi-icon">⚡</span>
+            <div className="monitoring-kpi-details">
+              <span className="monitoring-kpi-count" data-testid="kpi-active-count">{kpiMetrics.inProgress}</span>
+              <span className="monitoring-kpi-label">Active in Field</span>
+            </div>
+          </div>
+          <div className="monitoring-kpi-card">
+            <span className="monitoring-kpi-icon">✅</span>
+            <div className="monitoring-kpi-details">
+              <span className="monitoring-kpi-count" data-testid="kpi-resolved-count">{kpiMetrics.resolvedClosed}</span>
+              <span className="monitoring-kpi-label">Resolved / Closed</span>
+            </div>
+          </div>
+        </div>
+
         {/* Status Filter Tab Pills */}
         <div className="triage-filter-tabs" data-testid="status-filter-tabs">
           {STATUS_TABS.map((tab) => (
@@ -341,7 +454,49 @@ const AllComplaints = () => {
               ))}
             </select>
 
-            {(searchQuery || categoryFilter !== 'ALL' || priorityFilter !== 'ALL' || deptFilter !== 'ALL' || activeStatusTab !== 'ALL') && (
+            {/* Date Range Filtering */}
+            <div className="filter-date-group" data-testid="filter-date-group">
+              <input
+                type="date"
+                className="filter-date-input"
+                aria-label="Start date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                data-testid="filter-start-date"
+                title="Filter complaints filed from date"
+              />
+              <span style={{ color: '#64748b' }}>–</span>
+              <input
+                type="date"
+                className="filter-date-input"
+                aria-label="End date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                data-testid="filter-end-date"
+                title="Filter complaints filed to date"
+              />
+            </div>
+
+            {/* Sorting Dropdown */}
+            <select
+              className="filter-select"
+              value={`${sortBy}_${sortDir}`}
+              onChange={(e) => {
+                const [field, dir] = e.target.value.split('_')
+                setSortBy(field)
+                setSortDir(dir)
+              }}
+              data-testid="filter-select-sort"
+            >
+              <option value="createdAt_desc">Date: Newest First</option>
+              <option value="createdAt_asc">Date: Oldest First</option>
+              <option value="priority_desc">Priority: Critical to Low</option>
+              <option value="priority_asc">Priority: Low to Critical</option>
+              <option value="status_asc">Status (A-Z)</option>
+              <option value="updatedAt_desc">Last Updated</option>
+            </select>
+
+            {(searchQuery || categoryFilter !== 'ALL' || priorityFilter !== 'ALL' || deptFilter !== 'ALL' || activeStatusTab !== 'ALL' || startDate || endDate) && (
               <button
                 type="button"
                 className="btn-reset-filters"
@@ -351,6 +506,8 @@ const AllComplaints = () => {
                   setPriorityFilter('ALL')
                   setDeptFilter('ALL')
                   setActiveStatusTab('ALL')
+                  setStartDate('')
+                  setEndDate('')
                 }}
                 data-testid="btn-reset-filters"
               >
@@ -359,6 +516,65 @@ const AllComplaints = () => {
             )}
           </div>
         </div>
+
+        {/* Phase 9: Active Filter Badges with 1-Click Removal */}
+        {(searchQuery || categoryFilter !== 'ALL' || priorityFilter !== 'ALL' || deptFilter !== 'ALL' || activeStatusTab !== 'ALL' || startDate || endDate) && (
+          <div className="active-filter-chips-row" data-testid="active-filter-chips">
+            <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600 }}>Active Filters:</span>
+            {activeStatusTab !== 'ALL' && (
+              <span className="filter-chip" data-testid="chip-filter-status">
+                Status: {activeStatusTab}
+                <button type="button" className="chip-remove-btn" onClick={() => setActiveStatusTab('ALL')}>×</button>
+              </span>
+            )}
+            {categoryFilter !== 'ALL' && (
+              <span className="filter-chip" data-testid="chip-filter-category">
+                Category: {categoryFilter.replace(/_/g, ' ')}
+                <button type="button" className="chip-remove-btn" onClick={() => setCategoryFilter('ALL')}>×</button>
+              </span>
+            )}
+            {priorityFilter !== 'ALL' && (
+              <span className="filter-chip" data-testid="chip-filter-priority">
+                Priority: {priorityFilter}
+                <button type="button" className="chip-remove-btn" onClick={() => setPriorityFilter('ALL')}>×</button>
+              </span>
+            )}
+            {deptFilter !== 'ALL' && (
+              <span className="filter-chip" data-testid="chip-filter-dept">
+                Dept: {departments.find(d => String(d.id) === String(deptFilter))?.name || deptFilter}
+                <button type="button" className="chip-remove-btn" onClick={() => setDeptFilter('ALL')}>×</button>
+              </span>
+            )}
+            {(startDate || endDate) && (
+              <span className="filter-chip" data-testid="chip-filter-date">
+                Date: {startDate || 'Start'} to {endDate || 'Now'}
+                <button type="button" className="chip-remove-btn" onClick={() => { setStartDate(''); setEndDate(''); }}>×</button>
+              </span>
+            )}
+            {searchQuery && (
+              <span className="filter-chip" data-testid="chip-filter-search">
+                Search: "{searchQuery}"
+                <button type="button" className="chip-remove-btn" onClick={() => setSearchQuery('')}>×</button>
+              </span>
+            )}
+            <button
+              type="button"
+              className="clear-all-chips-btn"
+              onClick={() => {
+                setSearchQuery('')
+                setCategoryFilter('ALL')
+                setPriorityFilter('ALL')
+                setDeptFilter('ALL')
+                setActiveStatusTab('ALL')
+                setStartDate('')
+                setEndDate('')
+              }}
+              data-testid="btn-clear-all-chips"
+            >
+              Clear All
+            </button>
+          </div>
+        )}
 
         {/* Complaints Table & Grid */}
         {loading ? (
@@ -540,6 +756,16 @@ const AllComplaints = () => {
                             🔒 Close
                           </button>
                         )}
+
+                        <button
+                          type="button"
+                          className="btn-action-pill btn-row-audit"
+                          title="View complete chronological audit trail and assignment history"
+                          onClick={() => setAuditModalComplaint(item)}
+                          data-testid={`action-audit-${item.id}`}
+                        >
+                          ⏱️ History
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -770,6 +996,30 @@ const AllComplaints = () => {
             </div>
           </div>
         </Modal>
+
+        {/* Phase 9: Standalone 1-Click Grievance Audit Trail Modal */}
+        {auditModalComplaint && (
+          <Modal
+            isOpen={Boolean(auditModalComplaint)}
+            onClose={() => setAuditModalComplaint(null)}
+            title={`Grievance Audit Trail: ${auditModalComplaint.complaintNumber} — ${auditModalComplaint.title}`}
+            size="lg"
+            footer={
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setAuditModalComplaint(null)}
+                data-testid="btn-close-audit-modal"
+              >
+                Close Audit Log
+              </button>
+            }
+          >
+            <div className="audit-modal-body" data-testid="audit-modal-content">
+              <ComplaintAuditTimeline complaintId={auditModalComplaint.id} />
+            </div>
+          </Modal>
+        )}
       </div>
     </DashboardLayout>
   )
