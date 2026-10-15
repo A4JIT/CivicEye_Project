@@ -4,6 +4,7 @@ import departmentService from '../../services/departmentService'
 import ComplaintStatusBadge from '../../components/complaints/ComplaintStatusBadge'
 import Loader from '../../components/common/Loader'
 import Modal from '../../components/common/Modal'
+import ComplaintAuditTimeline from '../../components/complaints/ComplaintAuditTimeline'
 
 const STATUS_TABS = [
   { id: 'ALL', label: 'All Assigned', icon: '📋' },
@@ -791,30 +792,13 @@ const DepartmentComplaints = () => {
                 )}
               </div>
 
-              {/* Timeline History */}
-              {detailComplaint.timeline && detailComplaint.timeline.length > 0 && (
-                <div className="detail-section">
-                  <h4 className="detail-section-title">Audit Trail & Timeline</h4>
-                  <div className="detail-timeline-list" data-testid="detail-timeline-list">
-                    {detailComplaint.timeline.map((evt, idx) => (
-                      <div key={idx} className="timeline-item-row">
-                        <div className="timeline-dot"></div>
-                        <div className="timeline-content">
-                          <div className="timeline-header">
-                            <span className="timeline-action">
-                              {evt.fromStatus} $\rightarrow$ {evt.toStatus}
-                            </span>
-                            <span className="timeline-time">
-                              {new Date(evt.createdAt).toLocaleString()}
-                            </span>
-                          </div>
-                          {evt.remarks && <p className="timeline-remarks">{evt.remarks}</p>}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* Phase 9: Chronological Audit Trail & Assignment History */}
+              <div className="detail-section">
+                <ComplaintAuditTimeline
+                  complaintId={detailComplaint.id}
+                  initialEvents={detailComplaint.timeline}
+                />
+              </div>
             </div>
           </Modal>
         )}

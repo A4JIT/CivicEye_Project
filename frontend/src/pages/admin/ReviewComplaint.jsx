@@ -7,6 +7,7 @@ import ComplaintStatusBadge from '../../components/complaints/ComplaintStatusBad
 import Modal from '../../components/common/Modal'
 import Loader from '../../components/common/Loader'
 import DashboardLayout from '../../components/layout/DashboardLayout'
+import ComplaintAuditTimeline from '../../components/complaints/ComplaintAuditTimeline'
 
 const CATEGORY_OPTIONS = [
   { value: 'ROADS_AND_FOOTPATHS', label: 'Roads & Footpaths' },
@@ -516,6 +517,11 @@ const ReviewComplaint = ({ complaintProp, onUpdated, onClose, isDrawer = false }
                 </p>
               )}
             </div>
+          )}
+
+          {/* Phase 9: Comprehensive Status Audit Trail & Assignment History */}
+          {activeId && (
+            <ComplaintAuditTimeline complaintId={activeId} />
           )}
         </div>
 

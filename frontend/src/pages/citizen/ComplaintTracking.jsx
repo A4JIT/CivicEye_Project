@@ -4,6 +4,7 @@ import complaintService from '../../services/complaintService'
 import feedbackService from '../../services/feedbackService'
 import Loader from '../../components/common/Loader'
 import ErrorMessage from '../../components/common/ErrorMessage'
+import ComplaintAuditTimeline from '../../components/complaints/ComplaintAuditTimeline'
 
 const MILESTONES = [
   { key: 'SUBMITTED', label: 'Submitted', desc: 'Complaint registered by citizen' },
@@ -589,36 +590,8 @@ const ComplaintTracking = () => {
             </div>
           )}
 
-          {/* Chronological Audit Timeline */}
-          <div className="tracking-timeline-card" data-testid="timeline-audit-card">
-            <h3 className="card-heading">Audit Activity Log</h3>
-            {timeline.length === 0 ? (
-              <p className="no-timeline-text">No timeline transitions recorded yet.</p>
-            ) : (
-              <div className="timeline-stream">
-                {timeline.map((event, idx) => (
-                  <div key={event.id || idx} className="timeline-node" data-testid="timeline-node">
-                    <div className="timeline-node-marker" />
-                    <div className="timeline-node-body">
-                      <div className="timeline-node-header">
-                        <span className="node-transition">
-                          {event.fromStatus ? `${event.fromStatus} ➔ ` : 'Started as '}
-                          <strong>{event.toStatus}</strong>
-                        </span>
-                        <span className="node-time">
-                          {event.createdAt ? new Date(event.createdAt).toLocaleString() : ''}
-                        </span>
-                      </div>
-                      <div className="node-actor">
-                        👤 Updated by: <strong>{event.changedByName || 'System'}</strong> ({event.changedByRole || 'SYSTEM'})
-                      </div>
-                      {event.remarks && <p className="node-remarks">💬 {event.remarks}</p>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          {/* Phase 9: Chronological Audit Activity Timeline */}
+          <ComplaintAuditTimeline complaintId={complaint.id} initialEvents={timeline} />
 
           {/* Navigation Actions */}
           <div className="tracking-actions-bar">
