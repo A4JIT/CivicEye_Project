@@ -20,7 +20,9 @@ services:
       - ./database/migrations/V7__create_admin_triage_audit.sql:/docker-entrypoint-initdb.d/07_v7.sql
       - ./database/migrations/V8__create_department_resolution_schema.sql:/docker-entrypoint-initdb.d/08_v8.sql
       - ./database/migrations/V9__create_ai_recommendation_schema.sql:/docker-entrypoint-initdb.d/09_v9.sql
-      - ./database/seed/development_data.sql:/docker-entrypoint-initdb.d/10_seed.sql
+      - ./database/migrations/V10__create_feedback_and_closure_schema.sql:/docker-entrypoint-initdb.d/10_v10.sql
+      - ./database/migrations/V11__optimize_complaint_history_and_monitoring.sql:/docker-entrypoint-initdb.d/11_v11.sql
+      - ./database/seed/development_data.sql:/docker-entrypoint-initdb.d/12_seed.sql
 
 volumes:
   civiceye_pgdata:
