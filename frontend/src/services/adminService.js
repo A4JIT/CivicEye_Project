@@ -285,6 +285,24 @@ export const adminService = {
       throw error
     }
   },
+
+  closeComplaint: async (id, data = {}) => {
+    try {
+      const response = await api.post(`/admin/complaints/${id}/close`, data)
+      return response.data
+    } catch (error) {
+      if (!error.response || error.code === 'ERR_NETWORK') {
+        const item = memoryCatalog.find((c) => String(c.id) === String(id))
+        if (item) {
+          item.status = 'CLOSED'
+          item.closedAt = new Date().toISOString()
+          if (data.closureRemarks) item.closureRemarks = data.closureRemarks
+          return { success: true, data: { ...item } }
+        }
+      }
+      throw error
+    }
+  },
 }
 
 export default adminService

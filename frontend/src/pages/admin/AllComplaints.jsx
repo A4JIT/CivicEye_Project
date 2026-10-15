@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import DashboardLayout from '../../components/layout/DashboardLayout'
 import adminService from '../../services/adminService'
+import feedbackService from '../../services/feedbackService'
 import ComplaintStatusBadge from '../../components/complaints/ComplaintStatusBadge'
 import ReviewComplaint from './ReviewComplaint'
 import Loader from '../../components/common/Loader'
@@ -15,6 +16,7 @@ const STATUS_TABS = [
   { id: 'ASSIGNED', label: 'Assigned', icon: '🏢' },
   { id: 'IN_PROGRESS', label: 'In Progress', icon: '⚡' },
   { id: 'RESOLVED', label: 'Resolved', icon: '✅' },
+  { id: 'CLOSED', label: 'Closed', icon: '🔒' },
   { id: 'REJECTED', label: 'Rejected', icon: '❌' },
 ]
 
@@ -62,6 +64,7 @@ const AllComplaints = () => {
   const [quickInfoRemarks, setQuickInfoRemarks] = useState('')
   const [quickAssignDeptId, setQuickAssignDeptId] = useState('')
   const [quickAssignPriority, setQuickAssignPriority] = useState('MEDIUM')
+  const [quickCloseRemarks, setQuickCloseRemarks] = useState('')
   const [quickActionLoading, setQuickActionLoading] = useState(false)
   const [modalError, setModalError] = useState('')
 
@@ -212,6 +215,33 @@ const AllComplaints = () => {
       setQuickActionModal({ type: null, complaint: null })
     } catch (err) {
       setModalError(err.response?.data?.message || err.message || 'Failed to assign department.')
+    } finally {
+      setQuickActionLoading(false)
+    }
+  }
+
+  // Quick Close Submit (Phase 8)
+  const handleQuickClose = async () => {
+    const comp = quickActionModal.complaint
+    if (!comp) return
+    setQuickActionLoading(true)
+    setModalError('')
+    try {
+      const res = await feedbackService.closeComplaint(comp.id, {
+        closureRemarks: quickCloseRemarks.trim() || undefined,
+      })
+      const updated = res.data || res || {
+        ...comp,
+        status: 'CLOSED',
+        closedAt: new Date().toISOString(),
+        closureRemarks: quickCloseRemarks.trim(),
+      }
+      handleComplaintUpdated(updated)
+      setQuickActionModal({ type: null, complaint: null })
+      setQuickCloseRemarks('')
+      setFeedbackNotice(`Complaint ${comp.complaintNumber} has been officially closed.`)
+    } catch (err) {
+      setModalError(err.response?.data?.message || err.message || 'Failed to close complaint.')
     } finally {
       setQuickActionLoading(false)
     }
@@ -401,6 +431,15 @@ const AllComplaints = () => {
                             ✨ AI: {item.aiRecommendation?.suggestedDepartmentCode || (item.departmentName ? item.departmentName.split(' ')[0] : (item.category?.replace(/_/g, ' ') || 'Civic'))} | {item.aiRecommendation?.suggestedPriority || item.priority} ({Math.round(((item.aiRecommendation?.confidenceScore ?? 0.88) * 100))}%)
                           </span>
                         )}
+                        {item.feedbackRating && (
+                          <span
+                            className="citizen-rating-pill"
+                            title={`Citizen Rating: ${item.feedbackRating}/5 stars. ${item.feedbackComments ? `"${item.feedbackComments}"` : ''}`}
+                            data-testid={`rating-badge-${item.id}`}
+                          >
+                            ⭐ {item.feedbackRating}/5
+                          </span>
+                        )}
                         <span className="complaint-location">📍 {item.location}</span>
                       </div>
                     </td>
@@ -485,6 +524,22 @@ const AllComplaints = () => {
                         >
                           ❌ Reject
                         </button>
+
+                        {item.status === 'RESOLVED' && (
+                          <button
+                            type="button"
+                            className="btn-action-pill btn-close-table"
+                            title="Close resolved complaint with remarks"
+                            onClick={() => {
+                              setQuickCloseRemarks('')
+                              setModalError('')
+                              setQuickActionModal({ type: 'CLOSE', complaint: item })
+                            }}
+                            data-testid={`action-close-${item.id}`}
+                          >
+                            🔒 Close
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -667,6 +722,51 @@ const AllComplaints = () => {
                 <option value="HIGH">High</option>
                 <option value="CRITICAL">Critical</option>
               </select>
+            </div>
+          </div>
+        </Modal>
+
+        {/* Quick Close Modal (Phase 8) */}
+        <Modal
+          isOpen={quickActionModal.type === 'CLOSE'}
+          onClose={() => setQuickActionModal({ type: null, complaint: null })}
+          title={`Close Grievance ${quickActionModal.complaint?.complaintNumber}`}
+          footer={
+            <>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setQuickActionModal({ type: null, complaint: null })}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary btn-confirm-close"
+                disabled={quickActionLoading}
+                onClick={handleQuickClose}
+                data-testid="btn-confirm-quick-close"
+              >
+                {quickActionLoading ? 'Closing...' : 'Confirm Close Grievance'}
+              </button>
+            </>
+          }
+        >
+          <div className="modal-inner-form">
+            {modalError && <div className="alert alert-error">{modalError}</div>}
+            <p className="modal-instruction-text">
+              Close this resolved grievance and verify departmental execution.
+            </p>
+            <div className="form-group">
+              <label className="form-label">Administrative Closure Remarks (Optional)</label>
+              <textarea
+                className="form-textarea"
+                rows={3}
+                placeholder="Record administrative closure remarks or verification notes..."
+                value={quickCloseRemarks}
+                onChange={(e) => setQuickCloseRemarks(e.target.value)}
+                data-testid="textarea-quick-close-remarks"
+              />
             </div>
           </div>
         </Modal>

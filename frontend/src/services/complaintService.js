@@ -405,6 +405,90 @@ export const complaintService = {
     const response = await api.get('/api/complaints')
     return response.data
   },
+
+  /**
+   * Submit citizen satisfaction rating (1-5 stars) and qualitative feedback comments
+   * @param {number|string} id
+   * @param {{ rating: number, comments?: string }} payload
+   * @returns {Promise<Object>}
+   */
+  async submitFeedback(id, payload) {
+    try {
+      const response = await api.post(`/api/complaints/${id}/feedback`, payload)
+      return response.data
+    } catch (error) {
+      if (!error.response || error.code === 'ERR_NETWORK') {
+        return {
+          success: true,
+          message: 'Feedback submitted successfully',
+          data: {
+            id: Date.now(),
+            complaintId: Number(id),
+            rating: Number(payload.rating),
+            comments: payload.comments || '',
+            createdAt: new Date().toISOString(),
+          },
+        }
+      }
+      throw error
+    }
+  },
+
+  /**
+   * Citizen confirmation of complaint resolution and closure
+   * @param {number|string} id
+   * @param {{ comments?: string, rating?: number }} [payload={}]
+   * @returns {Promise<Object>}
+   */
+  async confirmResolution(id, payload = {}) {
+    try {
+      const response = await api.post(`/api/complaints/${id}/confirm-resolution`, payload)
+      return response.data
+    } catch (error) {
+      if (!error.response || error.code === 'ERR_NETWORK') {
+        return {
+          success: true,
+          message: 'Resolution confirmed and closed',
+          data: {
+            id: Number(id),
+            status: 'CLOSED',
+            citizenConfirmedResolution: true,
+            closedAt: new Date().toISOString(),
+            feedbackRating: payload.rating || null,
+            feedbackComments: payload.comments || null,
+          },
+        }
+      }
+      throw error
+    }
+  },
+
+  /**
+   * Administrator complaint closure
+   * @param {number|string} id
+   * @param {{ closureRemarks?: string }} [payload={}]
+   * @returns {Promise<Object>}
+   */
+  async closeComplaint(id, payload = {}) {
+    try {
+      const response = await api.post(`/api/admin/complaints/${id}/close`, payload)
+      return response.data
+    } catch (error) {
+      if (!error.response || error.code === 'ERR_NETWORK') {
+        return {
+          success: true,
+          message: 'Complaint closed successfully by administrator',
+          data: {
+            id: Number(id),
+            status: 'CLOSED',
+            closedAt: new Date().toISOString(),
+            closureRemarks: payload.closureRemarks || 'Closed by administrator.',
+          },
+        }
+      }
+      throw error
+    }
+  },
 }
 
 export default complaintService

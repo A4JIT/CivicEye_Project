@@ -41,6 +41,9 @@ const CitizenDashboard = () => {
   }
 
   const complaints = data?.recentComplaints || []
+  const resolvedItems = complaints.filter(
+    (c) => c.status === 'RESOLVED' || c.status === 'CLOSED'
+  )
 
   return (
     <DashboardLayout
@@ -66,6 +69,31 @@ const CitizenDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Phase 8: Resolution Verification Alert Banner if complaints are resolved */}
+      {(data?.resolvedComplaints > 0 || resolvedItems.length > 0) && (
+        <div className="citizen-resolution-banner" data-testid="citizen-resolved-notice">
+          <div className="resolution-banner-left">
+            <span className="resolution-seal-icon">⭐</span>
+            <div>
+              <strong>Resolution Verification & Rating Available</strong>
+              <p>
+                Municipal maintenance crews have completed work on your reported issue.
+                Review before-and-after photo proof, rate your satisfaction, and confirm closure.
+              </p>
+            </div>
+          </div>
+          {resolvedItems.length > 0 && (
+            <Link
+              to={`/complaints/track/${resolvedItems[0].trackingNumber || resolvedItems[0].complaintNumber}`}
+              className="btn btn-sm btn-success"
+              data-testid="btn-verify-top-resolved"
+            >
+              Verify Proof & Rate ↗
+            </Link>
+          )}
+        </div>
+      )}
 
       {/* KPI Stats Grid */}
       <div className="stats-grid" data-testid="citizen-stats-grid">
@@ -139,13 +167,19 @@ const CitizenDashboard = () => {
                   <th>Department</th>
                   <th>Priority</th>
                   <th>Status</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody>
                 {complaints.map((item) => (
                   <tr key={item.id || item.trackingNumber}>
                     <td className="tracking-cell">
-                      <span className="tracking-code">{item.trackingNumber}</span>
+                      <Link
+                        to={`/complaints/track/${item.trackingNumber || item.complaintNumber}`}
+                        className="tracking-code-link"
+                      >
+                        <span className="tracking-code">{item.trackingNumber || item.complaintNumber}</span>
+                      </Link>
                     </td>
                     <td className="title-cell">
                       <span className="complaint-title-text">{item.title}</span>
@@ -166,6 +200,24 @@ const CitizenDashboard = () => {
                       <span className={`badge badge-status status-${item.status?.toLowerCase()}`}>
                         {item.status?.replace('_', ' ')}
                       </span>
+                    </td>
+                    <td>
+                      {item.status === 'RESOLVED' ? (
+                        <Link
+                          to={`/complaints/track/${item.trackingNumber || item.complaintNumber}`}
+                          className="btn btn-xs btn-success"
+                          data-testid={`rate-resolution-${item.trackingNumber || item.complaintNumber}`}
+                        >
+                          ⭐ Rate & Close
+                        </Link>
+                      ) : (
+                        <Link
+                          to={`/complaints/track/${item.trackingNumber || item.complaintNumber}`}
+                          className="btn btn-xs btn-secondary"
+                        >
+                          🔍 Track
+                        </Link>
+                      )}
                     </td>
                   </tr>
                 ))}
