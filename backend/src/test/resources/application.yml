@@ -14,5 +14,7 @@ app:
   jwt:
     secret: test_super_secret_key_for_testing_purposes_only_1234567890
     expiration: 3600000
+  security:
+    admin-secret-code: CIVICEYE-ADMIN-2026-SECURE
   seeder:
     seed-complaints: false

@@ -5,6 +5,7 @@ import ComplaintStatusBadge from '../../components/complaints/ComplaintStatusBad
 import Loader from '../../components/common/Loader'
 import Modal from '../../components/common/Modal'
 import ComplaintAuditTimeline from '../../components/complaints/ComplaintAuditTimeline'
+import AuthenticatedImage from '../../components/common/AuthenticatedImage'
 
 const STATUS_TABS = [
   { id: 'ALL', label: 'All Assigned', icon: '📋' },
@@ -33,6 +34,7 @@ const DepartmentComplaints = () => {
   // Detail Drawer / Modal state
   const [detailComplaint, setDetailComplaint] = useState(null)
   const [detailLoading, setDetailLoading] = useState(false)
+  const [previewImage, setPreviewImage] = useState(null)
 
   // Start Work Action State
   const [actionLoadingId, setActionLoadingId] = useState(null)
@@ -447,6 +449,30 @@ const DepartmentComplaints = () => {
                         </div>
                         <div className="task-meta-sub">
                           <span>Reported by: {item.citizenName || 'Citizen'}</span>
+                          {item.imageUrl && (
+                            <button
+                              type="button"
+                              className="photo-proof-badge"
+                              title="Click to view citizen uploaded photo proof"
+                              onClick={() => setPreviewImage({ url: item.imageUrl, title: item.title, complaintNumber: item.complaintNumber })}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                background: 'rgba(56, 189, 248, 0.15)',
+                                color: '#38bdf8',
+                                border: '1px solid rgba(56, 189, 248, 0.4)',
+                                borderRadius: '6px',
+                                padding: '2px 8px',
+                                fontSize: '0.75rem',
+                                cursor: 'pointer',
+                                fontWeight: 600,
+                                marginLeft: '8px'
+                              }}
+                            >
+                              📸 View Defect Photo
+                            </button>
+                          )}
                         </div>
                       </td>
                       <td>
@@ -562,8 +588,13 @@ const DepartmentComplaints = () => {
                   </div>
 
                   {item.imageUrl && (
-                    <div className="dept-card-thumbnail">
-                      <img src={item.imageUrl} alt="Citizen Reported Defect" />
+                    <div className="dept-card-thumbnail" style={{ marginTop: '0.75rem', borderRadius: '8px', overflow: 'hidden' }}>
+                      <AuthenticatedImage
+                        src={item.imageUrl}
+                        alt="Citizen Reported Defect"
+                        style={{ width: '100%', maxHeight: '180px', objectFit: 'cover' }}
+                        allowZoom={true}
+                      />
                     </div>
                   )}
 
@@ -750,10 +781,12 @@ const DepartmentComplaints = () => {
                     </div>
                     {detailComplaint.imageUrl ? (
                       <div className="evidence-img-container">
-                        <img
+                        <AuthenticatedImage
                           src={detailComplaint.imageUrl}
                           alt="Citizen Defect Evidence"
                           className="evidence-img"
+                          style={{ width: '100%', maxHeight: '320px', objectFit: 'cover', borderRadius: '8px' }}
+                          allowZoom={true}
                         />
                       </div>
                     ) : (
@@ -770,10 +803,12 @@ const DepartmentComplaints = () => {
                     </div>
                     {detailComplaint.resolutionImageUrl ? (
                       <div className="evidence-img-container">
-                        <img
+                        <AuthenticatedImage
                           src={detailComplaint.resolutionImageUrl}
                           alt="Department Resolution Proof"
                           className="evidence-img"
+                          style={{ width: '100%', maxHeight: '320px', objectFit: 'cover', borderRadius: '8px' }}
+                          allowZoom={true}
                         />
                       </div>
                     ) : (
@@ -882,10 +917,12 @@ const DepartmentComplaints = () => {
                   <span className="resolve-preview-label">Citizen Reported Defect</span>
                   <div className="preview-box">
                     {resolveModal.complaint?.imageUrl ? (
-                      <img
+                      <AuthenticatedImage
                         src={resolveModal.complaint.imageUrl}
                         alt="Reported Defect"
                         className="preview-image"
+                        style={{ width: '100%', maxHeight: '180px', objectFit: 'cover', borderRadius: '6px' }}
+                        allowZoom={true}
                       />
                     ) : (
                       <div className="preview-empty">📷 No initial photo</div>
@@ -975,6 +1012,44 @@ const DepartmentComplaints = () => {
                 </button>
               </div>
             </form>
+          </Modal>
+        )}
+
+        {/* Standalone Citizen Defect Photo Preview Modal */}
+        {previewImage && (
+          <Modal
+            isOpen={Boolean(previewImage)}
+            onClose={() => setPreviewImage(null)}
+            title={`📸 Citizen Defect Photo: ${previewImage.complaintNumber}`}
+            maxWidth="700px"
+            footer={
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setPreviewImage(null)}
+              >
+                Close Preview
+              </button>
+            }
+          >
+            <div style={{ textAlign: 'center', padding: '1rem' }}>
+              <div style={{ marginBottom: '1rem', color: '#94a3b8', fontSize: '0.9rem', textAlign: 'left' }}>
+                <strong>Defect:</strong> {previewImage.title}
+              </div>
+              <AuthenticatedImage
+                src={previewImage.url}
+                alt="Citizen Defect Evidence Proof"
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '65vh',
+                  borderRadius: '10px',
+                  boxShadow: '0 8px 30px rgba(0, 0, 0, 0.4)',
+                  objectFit: 'contain',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                }}
+                allowZoom={true}
+              />
+            </div>
           </Modal>
         )}
       </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import historyService from '../../services/historyService'
 import Loader from '../common/Loader'
+import AuthenticatedImage from '../common/AuthenticatedImage'
 
 const EVENT_TYPE_CONFIG = {
   SUBMITTED: {
@@ -125,12 +126,12 @@ const ComplaintAuditTimeline = ({
   complaintId,
   initialEvents = null,
   timelineData = null,
-  readOnly = false,
+  _readOnly = false,
   className = '',
 }) => {
   const hasProvidedEvents = initialEvents !== null && initialEvents !== undefined
   const [events, setEvents] = useState(hasProvidedEvents ? initialEvents : (timelineData?.events || []))
-  const [complaintMeta, setComplaintMeta] = useState(timelineData || null)
+  const [_complaintMeta, setComplaintMeta] = useState(timelineData || null)
   const [loading, setLoading] = useState(!hasProvidedEvents && !timelineData && Boolean(complaintId))
   const [error, setError] = useState(null)
   const [filterType, setFilterType] = useState('ALL') // 'ALL' | 'STATUS' | 'ASSIGNMENT' | 'RESOLUTION'
@@ -372,12 +373,12 @@ const ComplaintAuditTimeline = ({
                   {event.evidenceUrl && (
                     <div className="node-evidence-preview">
                       <span className="evidence-preview-label">Attached Inspection Proof:</span>
-                      <img
+                      <AuthenticatedImage
                         src={event.evidenceUrl}
                         alt="Audit Event Attachment"
                         className="node-evidence-thumb"
+                        allowZoom={false}
                         onClick={() => setPreviewImage(event.evidenceUrl)}
-                        title="Click to zoom evidence photo"
                       />
                     </div>
                   )}
@@ -402,7 +403,13 @@ const ComplaintAuditTimeline = ({
                 ✕
               </button>
             </div>
-            <img src={previewImage} alt="Enlarged Evidence" className="photo-modal-img" />
+            <AuthenticatedImage
+              src={previewImage}
+              alt="Enlarged Evidence"
+              className="photo-modal-img"
+              style={{ maxWidth: '100%', maxHeight: '75vh', objectFit: 'contain' }}
+              allowZoom={false}
+            />
           </div>
         </div>
       )}

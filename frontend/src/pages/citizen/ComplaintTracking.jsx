@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
+import DashboardLayout from '../../components/layout/DashboardLayout'
 import complaintService from '../../services/complaintService'
 import feedbackService from '../../services/feedbackService'
 import Loader from '../../components/common/Loader'
 import ErrorMessage from '../../components/common/ErrorMessage'
 import ComplaintAuditTimeline from '../../components/complaints/ComplaintAuditTimeline'
+import AuthenticatedImage from '../../components/common/AuthenticatedImage'
 
 const MILESTONES = [
   { key: 'SUBMITTED', label: 'Submitted', desc: 'Complaint registered by citizen' },
@@ -43,6 +45,12 @@ const RATING_LABELS = {
   5: 'Excellent - Highly Satisfied',
 }
 
+const DEMO_TICKETS = [
+  { id: 'CE-2026-0001', category: 'Roads & Traffic', status: 'IN_PROGRESS', icon: '🛣️' },
+  { id: 'CE-2026-0004', category: 'Garbage & Waste', status: 'ASSIGNED', icon: '🗑️' },
+  { id: 'CE-2026-0006', category: 'Water Supply', status: 'RESOLVED', icon: '💧' },
+]
+
 const ComplaintTracking = () => {
   const { complaintNumber: routeNumber } = useParams()
   const navigate = useNavigate()
@@ -53,6 +61,32 @@ const ComplaintTracking = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [copied, setCopied] = useState(false)
+
+  const handleClearSearch = () => {
+    setSearchInput('')
+    setComplaint(null)
+    setTimeline([])
+    setError(null)
+    navigate('/complaints/track')
+  }
+
+  const getStatusGlowClass = (status) => {
+    switch (status) {
+      case 'RESOLVED':
+      case 'CLOSED':
+        return 'status-glow-resolved'
+      case 'IN_PROGRESS':
+        return 'status-glow-in-progress'
+      case 'ASSIGNED':
+      case 'UNDER_REVIEW':
+      case 'SUBMITTED':
+        return 'status-glow-assigned'
+      case 'REJECTED':
+        return 'status-glow-rejected'
+      default:
+        return ''
+    }
+  }
 
   // Phase 8: Citizen Feedback & Resolution Closure States
   const [selectedRating, setSelectedRating] = useState(0)
@@ -216,66 +250,134 @@ const ComplaintTracking = () => {
   const isResolvedOrClosed = complaint?.status === 'RESOLVED' || complaint?.status === 'CLOSED'
 
   return (
-    <div className="tracking-page-container">
-      {/* Top Header & Search Bar */}
-      <div className="tracking-header">
-        <div className="header-badge">🛰️ Live Lifecycle Tracker</div>
-        <h1 className="page-title">Track Civic Defect Status</h1>
-        <p className="page-subtitle">
-          Real-time municipal progress tracking, department assignment, and before/after verification proof.
-        </p>
+    <DashboardLayout
+      title="Track Civic Defect Status"
+      subtitle="Real-time municipal progress tracking, department assignment, and before/after verification proof."
+    >
+      <div className="tracking-page-container">
+        {/* Top Header & Search Bar */}
+        <div className="tracking-header">
+          <div className="header-badge">🛰️ Live Lifecycle Tracker</div>
 
-        <form className="tracking-search-form" onSubmit={handleSearchSubmit}>
-          <input
-            type="text"
-            className="form-input tracking-search-input"
-            placeholder="Enter Tracking ID (e.g. CE-2026-0001)"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            data-testid="tracking-search-input"
-          />
-          <button
-            type="submit"
-            className="btn btn-primary btn-track"
-            data-testid="btn-search-tracking"
-            disabled={loading}
-          >
-            {loading ? 'Searching...' : '🔍 Track Issue'}
-          </button>
-        </form>
+          <div className="tracking-search-hero-box">
+            <form className="tracking-search-form" onSubmit={handleSearchSubmit}>
+              <div className="search-input-field-wrapper">
+                <span className="search-icon-prefix">🔎</span>
+                <input
+                  type="text"
+                  className="form-input tracking-search-input"
+                  placeholder="Enter Tracking ID (e.g. CE-2026-0001)"
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  data-testid="tracking-search-input"
+                />
+                {searchInput && (
+                  <button
+                    type="button"
+                    className="btn-clear-search-input"
+                    onClick={() => setSearchInput('')}
+                    title="Clear input"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+              <button
+                type="submit"
+                className="btn btn-primary btn-track"
+                data-testid="btn-search-tracking"
+                disabled={loading}
+              >
+                {loading ? 'Searching...' : '🔍 Track Issue'}
+              </button>
+            </form>
 
-        <div className="quick-tracking-chips">
-          <span className="chips-label">Recent demo IDs:</span>
-          {['CE-2026-0001', 'CE-2026-0004', 'CE-2026-0006'].map((num) => (
-            <button
-              key={num}
-              type="button"
-              className="tracking-chip-btn"
-              onClick={() => {
-                setSearchInput(num)
-                navigate(`/complaints/track/${num}`)
-                fetchComplaintDetails(num)
-              }}
-            >
-              {num}
-            </button>
-          ))}
+            <div className="quick-tracking-chips">
+              <span className="chips-label">Recent demo IDs:</span>
+              {DEMO_TICKETS.map((ticket) => (
+                <button
+                  key={ticket.id}
+                  type="button"
+                  className={`tracking-chip-btn ${complaint?.complaintNumber === ticket.id ? 'active' : ''}`}
+                  onClick={() => {
+                    setSearchInput(ticket.id)
+                    navigate(`/complaints/track/${ticket.id}`)
+                    fetchComplaintDetails(ticket.id)
+                  }}
+                  title={`Track ${ticket.category}`}
+                >
+                  <span className="chip-icon">{ticket.icon}</span>
+                  <span className="chip-code">{ticket.id}</span>
+                  <span className="chip-category">({ticket.category})</span>
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
-      </div>
 
-      {loading && <Loader message="Retrieving real-time complaint lifecycle..." />}
+        {loading && <Loader message="Retrieving real-time complaint lifecycle..." />}
 
-      {error && (
-        <div className="tracking-error-wrapper">
-          <ErrorMessage message={error} onDismiss={() => setError(null)} />
-        </div>
-      )}
+        {error && (
+          <div className="tracking-error-wrapper">
+            <ErrorMessage message={error} onDismiss={() => setError(null)} />
+          </div>
+        )}
 
-      {/* Main Complaint Lifecycle Presentation */}
-      {complaint && !loading && (
-        <div className="tracking-content" data-testid="tracking-details-card">
-          {/* Complaint Header Card */}
-          <div className="tracking-summary-card">
+        {/* Welcome & Informational Guide (Rendered when no complaint is actively loaded) */}
+        {!complaint && !loading && !error && (
+          <div className="tracking-welcome-guide" data-testid="tracking-welcome-guide">
+            <div className="welcome-guide-header">
+              <span className="welcome-tag">Public Transparency Portal</span>
+              <h3 className="welcome-title">Real-Time Municipal Resolution Lifecycle</h3>
+              <p className="welcome-desc">
+                CivicEye AI provides end-to-end visibility for every reported civic defect. From automated AI triage
+                to department deployment, engineer work logs, and certified photographic proof verification.
+              </p>
+            </div>
+
+            <div className="tracking-features-grid">
+              <div className="tracking-feature-card">
+                <div className="feature-card-icon">📸</div>
+                <h4>1. Geo-Tagged Evidence</h4>
+                <p>Citizens lodge issues with on-site defect photos and precise GPS geolocation coordinates.</p>
+              </div>
+
+              <div className="tracking-feature-card">
+                <div className="feature-card-icon">⚡</div>
+                <h4>2. AI Urgency Triage</h4>
+                <p>Automated intelligence tags the category, estimates hazard levels, and alerts dispatchers.</p>
+              </div>
+
+              <div className="tracking-feature-card">
+                <div className="feature-card-icon">👷</div>
+                <h4>3. Field Crew Action</h4>
+                <p>Civil engineering squads (Roads, Power, Water, Sanitation) inspect and repair the defect.</p>
+              </div>
+
+              <div className="tracking-feature-card">
+                <div className="feature-card-icon">🛡️</div>
+                <h4>4. Certified Resolution</h4>
+                <p>Field teams upload completed proof photos. Citizens rate work quality before ticket closure.</p>
+              </div>
+            </div>
+
+            <div className="tracking-welcome-cta">
+              <div className="cta-text">
+                <h4>Have a municipal defect to report?</h4>
+                <p>Report potholes, contaminated water, broken lights, or waste dumps directly to authorities.</p>
+              </div>
+              <Link to="/complaints/new" className="btn btn-primary" id="btn-welcome-report">
+                ➕ File New Complaint
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* Main Complaint Lifecycle Presentation */}
+        {complaint && !loading && (
+          <div className="tracking-content" data-testid="tracking-details-card">
+            {/* Complaint Header Card */}
+            <div className={`tracking-summary-card ${getStatusGlowClass(complaint.status)}`}>
             <div className="summary-card-top">
               <div className="complaint-id-row">
                 <span className="tracking-number-badge">
@@ -430,20 +532,22 @@ const ComplaintTracking = () => {
                 {complaint.imageUrl && (
                   <div className="evidence-box before-box">
                     <span className="evidence-badge badge-reported">📸 Citizen Defect Evidence</span>
-                    <img
+                    <AuthenticatedImage
                       src={complaint.imageUrl}
                       alt="Reported civic defect"
                       className="evidence-photo"
+                      allowZoom={true}
                     />
                   </div>
                 )}
                 {complaint.resolutionImageUrl && (
                   <div className="evidence-box after-box">
                     <span className="evidence-badge badge-resolved">✅ Field Resolution Proof</span>
-                    <img
+                    <AuthenticatedImage
                       src={complaint.resolutionImageUrl}
                       alt="Field resolution proof"
                       className="evidence-photo"
+                      allowZoom={true}
                     />
                     {complaint.resolutionNotes && (
                       <p className="resolution-notes-caption">
@@ -595,6 +699,13 @@ const ComplaintTracking = () => {
 
           {/* Navigation Actions */}
           <div className="tracking-actions-bar">
+            <button
+              type="button"
+              className="btn btn-outline"
+              onClick={handleClearSearch}
+            >
+              🔄 Track Different Issue
+            </button>
             <Link to="/dashboard" className="btn btn-secondary">
               📊 Back to Dashboard
             </Link>
@@ -604,7 +715,8 @@ const ComplaintTracking = () => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </DashboardLayout>
   )
 }
 

@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import adminService from '../../services/adminService'
 import aiService from '../../services/aiService'
+import complaintService from '../../services/complaintService'
 import feedbackService from '../../services/feedbackService'
 import ComplaintStatusBadge from '../../components/complaints/ComplaintStatusBadge'
 import Modal from '../../components/common/Modal'
 import Loader from '../../components/common/Loader'
 import DashboardLayout from '../../components/layout/DashboardLayout'
 import ComplaintAuditTimeline from '../../components/complaints/ComplaintAuditTimeline'
+import AuthenticatedImage from '../../components/common/AuthenticatedImage'
 
 const CATEGORY_OPTIONS = [
   { value: 'ROADS_AND_FOOTPATHS', label: 'Roads & Footpaths' },
@@ -35,7 +37,6 @@ const REJECTION_CATEGORIES = [
 
 const ReviewComplaint = ({ complaintProp, onUpdated, onClose, isDrawer = false }) => {
   const { id: routeId } = useParams()
-  const navigate = useNavigate()
   const activeId = complaintProp?.id || routeId
 
   const [complaint, setComplaint] = useState(complaintProp || null)
@@ -65,6 +66,7 @@ const ReviewComplaint = ({ complaintProp, onUpdated, onClose, isDrawer = false }
   const [showRejectModal, setShowRejectModal] = useState(false)
   const [rejectionReason, setRejectionReason] = useState('')
   const [rejectionCategory, setRejectionCategory] = useState('INVALID')
+  const [duplicateParentId, setDuplicateParentId] = useState('')
   const [rejectValidationError, setRejectValidationError] = useState('')
 
   const [showInfoModal, setShowInfoModal] = useState(false)
@@ -258,15 +260,27 @@ const ReviewComplaint = ({ complaintProp, onUpdated, onClose, isDrawer = false }
     setActionLoading(true)
     setErrorMessage('')
     try {
-      const payload = {
-        rejectionReason: rejectionReason.trim(),
-        rejectionCategory,
+      let updated
+      if (rejectionCategory === 'DUPLICATE' && duplicateParentId.trim()) {
+        await complaintService.mergeDuplicate(complaint.id, duplicateParentId.trim(), rejectionReason.trim())
+        updated = {
+          ...complaint,
+          status: 'REJECTED',
+          rejectionReason: rejectionReason.trim() || `Duplicate of complaint #${duplicateParentId}`,
+          duplicateOfId: Number(duplicateParentId) || null,
+          duplicateOfNumber: `CE-${duplicateParentId}`,
+        }
+      } else {
+        const payload = {
+          rejectionReason: rejectionReason.trim(),
+          rejectionCategory,
+        }
+        const response = await adminService.rejectComplaint(complaint.id, payload)
+        updated = response?.data || response
       }
-      const response = await adminService.rejectComplaint(complaint.id, payload)
-      const updated = response?.data || response
       setComplaint(updated)
       setShowRejectModal(false)
-      setSuccessMessage('Complaint has been rejected and reason logged permanently.')
+      setSuccessMessage('Complaint has been marked as duplicate/rejected and recorded permanently.')
       if (onUpdated) onUpdated(updated)
     } catch (err) {
       setErrorMessage(err.response?.data?.message || err.message || 'Failed to reject complaint.')
@@ -400,6 +414,14 @@ const ReviewComplaint = ({ complaintProp, onUpdated, onClose, isDrawer = false }
             <span className={`badge badge-priority priority-${complaint.priority?.toLowerCase()}`}>
               {complaint.priority} Priority
             </span>
+            <span className="badge badge-upvotes" data-testid="badge-upvotes-count">
+              👍 {complaint.upvotesCount || 1} {complaint.upvotesCount === 1 ? 'Endorsement' : 'Endorsements'}
+            </span>
+            {complaint.duplicateOfId && (
+              <span className="badge badge-duplicate-linked" data-testid="badge-duplicate-status" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+                ⚡ Duplicate of #{complaint.duplicateOfNumber || complaint.duplicateOfId}
+              </span>
+            )}
             {complaint.isOverridden || aiRecommendation?.isOverridden || complaint.aiCategoryOverridden || complaint.aiPriorityOverridden ? (
               <span className="badge badge-ai-override" data-testid="badge-override-status" title="Category / Priority modified by Admin">
                 ⚠️ Admin Overridden
@@ -427,6 +449,19 @@ const ReviewComplaint = ({ complaintProp, onUpdated, onClose, isDrawer = false }
       <div className="triage-grid-layout">
         {/* Left Column: Complaint Evidence & Details */}
         <div className="triage-main-panel">
+          {complaint.duplicateOfId && (
+            <div className="triage-card card-duplicate-banner" data-testid="duplicate-parent-box" style={{ borderLeft: '4px solid #f59e0b', background: 'rgba(245, 158, 11, 0.08)' }}>
+              <h4 className="card-heading" style={{ color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span>⚡ Linked Duplicate Complaint</span>
+              </h4>
+              <p style={{ margin: 0, color: '#cbd5e1', fontSize: '0.9rem' }}>
+                This grievance was identified as a duplicate and merged into primary complaint{' '}
+                <strong style={{ color: '#38bdf8' }}>#{complaint.duplicateOfNumber || complaint.duplicateOfId}</strong>.
+                {complaint.duplicateScore ? ` (AI Match Score: ${Math.round(complaint.duplicateScore * 100)}%)` : ''}
+              </p>
+            </div>
+          )}
+
           <div className="triage-card">
             <h4 className="card-heading">📍 Location & Geo-Coordinates</h4>
             <div className="location-box">
@@ -447,20 +482,15 @@ const ReviewComplaint = ({ complaintProp, onUpdated, onClose, isDrawer = false }
 
           <div className="triage-card">
             <h4 className="card-heading">📸 Uploaded Photo Evidence</h4>
-            {complaint.imageUrl ? (
-              <div className="evidence-preview-wrapper">
-                <img
-                  src={complaint.imageUrl}
-                  alt="Complaint Evidence"
-                  className="evidence-image-preview"
-                />
-              </div>
-            ) : (
-              <div className="evidence-placeholder-box">
-                <span className="placeholder-camera-icon">📷</span>
-                <span>No photographic evidence attached with this complaint</span>
-              </div>
-            )}
+            <div className="evidence-preview-wrapper">
+              <AuthenticatedImage
+                src={complaint.imageUrl}
+                alt={`Photo evidence for ${complaint.complaintNumber}`}
+                className="evidence-image-preview"
+                style={{ maxHeight: '350px', width: '100%', objectFit: 'cover', borderRadius: '8px' }}
+                allowZoom={true}
+              />
+            </div>
           </div>
 
           {/* Current Notes / Rejection Reason / Needs Info Box */}
@@ -790,14 +820,7 @@ const ReviewComplaint = ({ complaintProp, onUpdated, onClose, isDrawer = false }
                 🏢 Assign & Dispatch Department
               </button>
 
-              <button
-                type="button"
-                className="btn btn-action-dispatch btn-request-info"
-                onClick={() => setShowInfoModal(true)}
-                data-testid="btn-open-info-modal"
-              >
-                ❓ Request Additional Details
-              </button>
+
 
               <button
                 type="button"
@@ -870,6 +893,25 @@ const ReviewComplaint = ({ complaintProp, onUpdated, onClose, isDrawer = false }
             </select>
           </div>
 
+          {rejectionCategory === 'DUPLICATE' && (
+            <div className="form-group" data-testid="duplicate-parent-input-group">
+              <label className="form-label">
+                Parent Primary Complaint ID / Number <span className="text-muted">(To Link & Merge)</span>
+              </label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="e.g. 1 or CE-2026-0001"
+                value={duplicateParentId}
+                onChange={(e) => setDuplicateParentId(e.target.value)}
+                data-testid="input-duplicate-parent-id"
+              />
+              <span className="field-hint" style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                Linking merges citizen interest and updates the parent issue's upvote count.
+              </span>
+            </div>
+          )}
+
           <div className="form-group">
             <label className="form-label">
               Detailed Reason / Justification <span className="text-danger">*</span>
@@ -889,54 +931,7 @@ const ReviewComplaint = ({ complaintProp, onUpdated, onClose, isDrawer = false }
         </div>
       </Modal>
 
-      {/* 2. Request Information Modal */}
-      <Modal
-        isOpen={showInfoModal}
-        onClose={() => setShowInfoModal(false)}
-        title="Request Additional Details from Citizen"
-        footer={
-          <>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => setShowInfoModal(false)}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              className="btn btn-primary"
-              disabled={actionLoading || !infoRequestRemarks.trim()}
-              onClick={handleInfoSubmit}
-              data-testid="btn-confirm-info-request"
-            >
-              {actionLoading ? 'Sending...' : 'Send Request to Citizen'}
-            </button>
-          </>
-        }
-      >
-        <div className="modal-inner-form">
-          <p className="modal-instruction-text">
-            The complaint will be moved to <strong>Needs Information</strong>. The citizen will be asked to update their submission.
-          </p>
-          <div className="form-group">
-            <label className="form-label">
-              Inquiry Message <span className="text-danger">*</span>
-            </label>
-            <textarea
-              className="form-textarea"
-              rows={4}
-              placeholder="e.g. Please specify the exact street landmark, pillar number, or attach a daytime photo..."
-              value={infoRequestRemarks}
-              onChange={(e) => setInfoRequestRemarks(e.target.value)}
-              data-testid="textarea-info-remarks"
-            />
-            {infoValidationError && (
-              <span className="field-error-text" data-testid="info-error-text">{infoValidationError}</span>
-            )}
-          </div>
-        </div>
-      </Modal>
+
 
       {/* 3. Assign Department Modal */}
       <Modal

@@ -27,22 +27,23 @@ public class ComplaintController {
     private final AiRecommendationService aiRecommendationService;
     private final FeedbackService feedbackService;
     private final ComplaintHistoryService historyService;
+    private final DuplicateDetectionService duplicateDetectionService;
 
     public ComplaintController(ComplaintService complaintService) {
-        this(complaintService, null, null, null, null, null);
+        this(complaintService, null, null, null, null, null, null);
     }
 
     public ComplaintController(ComplaintService complaintService,
                                ComplaintLifecycleService lifecycleService,
                                AdminComplaintService adminComplaintService) {
-        this(complaintService, lifecycleService, adminComplaintService, null, null, null);
+        this(complaintService, lifecycleService, adminComplaintService, null, null, null, null);
     }
 
     public ComplaintController(ComplaintService complaintService,
                                ComplaintLifecycleService lifecycleService,
                                AdminComplaintService adminComplaintService,
                                AiRecommendationService aiRecommendationService) {
-        this(complaintService, lifecycleService, adminComplaintService, aiRecommendationService, null, null);
+        this(complaintService, lifecycleService, adminComplaintService, aiRecommendationService, null, null, null);
     }
 
     public ComplaintController(ComplaintService complaintService,
@@ -50,7 +51,16 @@ public class ComplaintController {
                                AdminComplaintService adminComplaintService,
                                AiRecommendationService aiRecommendationService,
                                FeedbackService feedbackService) {
-        this(complaintService, lifecycleService, adminComplaintService, aiRecommendationService, feedbackService, null);
+        this(complaintService, lifecycleService, adminComplaintService, aiRecommendationService, feedbackService, null, null);
+    }
+
+    public ComplaintController(ComplaintService complaintService,
+                               ComplaintLifecycleService lifecycleService,
+                               AdminComplaintService adminComplaintService,
+                               AiRecommendationService aiRecommendationService,
+                               FeedbackService feedbackService,
+                               ComplaintHistoryService historyService) {
+        this(complaintService, lifecycleService, adminComplaintService, aiRecommendationService, feedbackService, historyService, null);
     }
 
     @org.springframework.beans.factory.annotation.Autowired
@@ -59,13 +69,15 @@ public class ComplaintController {
                                AdminComplaintService adminComplaintService,
                                AiRecommendationService aiRecommendationService,
                                FeedbackService feedbackService,
-                               ComplaintHistoryService historyService) {
+                               ComplaintHistoryService historyService,
+                               DuplicateDetectionService duplicateDetectionService) {
         this.complaintService = complaintService;
         this.lifecycleService = lifecycleService;
         this.adminComplaintService = adminComplaintService;
         this.aiRecommendationService = aiRecommendationService;
         this.feedbackService = feedbackService;
         this.historyService = historyService;
+        this.duplicateDetectionService = duplicateDetectionService;
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -299,5 +311,40 @@ public class ComplaintController {
         }
         List<ComplaintAssignmentResponse> response = historyService.getAssignmentHistory(id, currentUser);
         return ResponseEntity.ok(ApiResponse.success("Complaint assignment history retrieved successfully", response));
+    }
+
+    @PostMapping("/check-duplicate")
+    public ResponseEntity<ApiResponse<DuplicateCheckResponse>> checkDuplicateComplaint(
+            @RequestBody DuplicateCheckRequest request) {
+        DuplicateCheckResponse response = duplicateDetectionService != null
+                ? duplicateDetectionService.checkDuplicates(request)
+                : DuplicateCheckResponse.builder().isDuplicate(false).highestScore(0.0).matches(java.util.Collections.emptyList()).build();
+        return ResponseEntity.ok(ApiResponse.success("Duplicate check completed", response));
+    }
+
+    @PostMapping("/{id}/upvote")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> upvoteComplaint(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal currentUser) {
+        if (duplicateDetectionService == null) {
+            return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+        }
+        java.util.Map<String, Object> response = duplicateDetectionService.upvoteComplaint(id, currentUser);
+        return ResponseEntity.ok(ApiResponse.success("Upvote processed successfully", response));
+    }
+
+    @PostMapping("/{id}/merge-duplicate")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> mergeDuplicate(
+            @PathVariable Long id,
+            @RequestParam String parentId,
+            @RequestParam(required = false) String remarks,
+            @AuthenticationPrincipal UserPrincipal currentUser) {
+        if (duplicateDetectionService == null) {
+            return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+        }
+        java.util.Map<String, Object> response = duplicateDetectionService.mergeDuplicate(id, parentId, currentUser, remarks);
+        return ResponseEntity.ok(ApiResponse.success("Duplicate merged successfully", response));
     }
 }

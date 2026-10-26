@@ -1,0 +1,185 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model ai_recommendations {
+  id                      BigInt       @id @default(autoincrement())
+  confidence_score        Float
+  created_at              DateTime     @db.Timestamp(6)
+  explanation             String?
+  is_overridden           Boolean
+  overridden_at           DateTime?    @db.Timestamp(6)
+  override_reason         String?
+  suggested_category      String       @db.VarChar(50)
+  suggested_priority      String       @db.VarChar(20)
+  updated_at              DateTime     @db.Timestamp(6)
+  complaint_id            BigInt?      @unique(map: "uk_obnhosc29b97n0yojufbib0fd")
+  overridden_by_user_id   BigInt?
+  suggested_department_id BigInt?
+  complaints              complaints?  @relation(fields: [complaint_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk2auu3uod4huts9j165i6txbu5")
+  users                   users?       @relation(fields: [overridden_by_user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fkam3tqdb5und6dver31ke61ofs")
+  departments             departments? @relation(fields: [suggested_department_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fklyf6sjy9ufg696nv3ep903c06")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model complaint_assignments {
+  id                                                BigInt      @id @default(autoincrement())
+  complaint_id                                      BigInt
+  department_id                                     BigInt
+  assigned_to_id                                    BigInt?
+  assigned_by_id                                    BigInt
+  instructions                                      String?
+  is_active                                         Boolean     @default(true)
+  created_at                                        DateTime    @default(now()) @db.Timestamptz(6)
+  completed_at                                      DateTime?   @db.Timestamptz(6)
+  users_complaint_assignments_assigned_by_idTousers users       @relation("complaint_assignments_assigned_by_idTousers", fields: [assigned_by_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users_complaint_assignments_assigned_to_idTousers users?      @relation("complaint_assignments_assigned_to_idTousers", fields: [assigned_to_id], references: [id], onUpdate: NoAction)
+  complaints                                        complaints  @relation(fields: [complaint_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  departments                                       departments @relation(fields: [department_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([assigned_to_id], map: "idx_assignments_assigned_to")
+  @@index([complaint_id], map: "idx_assignments_complaint")
+  @@index([department_id], map: "idx_assignments_department")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model complaint_feedback {
+  id            BigInt       @id @default(autoincrement())
+  complaint_id  BigInt       @unique
+  citizen_id    BigInt
+  rating        Int
+  comments      String?
+  created_at    DateTime     @default(now()) @db.Timestamptz(6)
+  department_id BigInt?
+  users         users        @relation(fields: [citizen_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  complaints    complaints   @relation(fields: [complaint_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  departments   departments? @relation(fields: [department_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fksflh9jwxs88cks5u1pgm2q5jp")
+
+  @@index([citizen_id], map: "idx_feedback_citizen_id")
+  @@index([complaint_id], map: "idx_feedback_complaint_id")
+  @@index([rating], map: "idx_feedback_rating")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model complaint_status_history {
+  id                   BigInt     @id @default(autoincrement())
+  complaint_id         BigInt
+  from_status          String?    @db.VarChar(30)
+  to_status            String     @db.VarChar(30)
+  changed_by_id        BigInt
+  remarks              String?
+  resolution_image_url String?    @db.VarChar(500)
+  created_at           DateTime   @default(now()) @db.Timestamptz(6)
+  users                users      @relation(fields: [changed_by_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  complaints           complaints @relation(fields: [complaint_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([changed_by_id], map: "idx_status_history_changed_by")
+  @@index([complaint_id, created_at(sort: Desc)], map: "idx_status_history_complaint")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model complaints {
+  id                                        BigInt                     @id @default(autoincrement())
+  complaint_number                          String                     @unique @db.VarChar(50)
+  title                                     String                     @db.VarChar(150)
+  description                               String
+  category                                  String                     @db.VarChar(50)
+  status                                    String                     @default("SUBMITTED") @db.VarChar(30)
+  priority                                  String                     @default("MEDIUM") @db.VarChar(20)
+  location                                  String                     @db.VarChar(255)
+  latitude                                  Float?
+  longitude                                 Float?
+  image_url                                 String?                    @db.VarChar(500)
+  citizen_id                                BigInt
+  department_id                             BigInt?
+  assigned_to_id                            BigInt?
+  rejection_reason                          String?
+  resolution_notes                          String?
+  resolution_image_url                      String?                    @db.VarChar(500)
+  created_at                                DateTime                   @default(now()) @db.Timestamptz(6)
+  updated_at                                DateTime                   @default(now()) @db.Timestamptz(6)
+  resolved_at                               DateTime?                  @db.Timestamptz(6)
+  admin_notes                               String?
+  ai_category_overridden                    Boolean?
+  ai_priority_overridden                    Boolean?
+  needs_info_remarks                        String?
+  progress_notes                            String?
+  started_working_at                        DateTime?                  @db.Timestamp(6)
+  citizen_confirmed_resolution              Boolean?
+  closed_at                                 DateTime?                  @db.Timestamp(6)
+  closure_remarks                           String?
+  closed_by_user_id                         BigInt?
+  ai_recommendations                        ai_recommendations?
+  complaint_assignments                     complaint_assignments[]
+  complaint_feedback                        complaint_feedback?
+  complaint_status_history                  complaint_status_history[]
+  users_complaints_assigned_to_idTousers    users?                     @relation("complaints_assigned_to_idTousers", fields: [assigned_to_id], references: [id], onUpdate: NoAction)
+  users_complaints_citizen_idTousers        users                      @relation("complaints_citizen_idTousers", fields: [citizen_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  departments                               departments?               @relation(fields: [department_id], references: [id], onUpdate: NoAction)
+  users_complaints_closed_by_user_idTousers users?                     @relation("complaints_closed_by_user_idTousers", fields: [closed_by_user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk92vw5k31fdvmqprofwe7jw4i6")
+
+  @@index([category], map: "idx_complaints_category")
+  @@index([citizen_id], map: "idx_complaints_citizen_id")
+  @@index([citizen_id, status], map: "idx_complaints_citizen_status")
+  @@index([created_at(sort: Desc)], map: "idx_complaints_created_at")
+  @@index([department_id], map: "idx_complaints_department_id")
+  @@index([department_id, status], map: "idx_complaints_dept_status")
+  @@index([status], map: "idx_complaints_status")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model departments {
+  id                    BigInt                  @id @default(autoincrement())
+  name                  String                  @unique @db.VarChar(100)
+  code                  String                  @unique @db.VarChar(30)
+  description           String?
+  contact_email         String?                 @db.VarChar(100)
+  contact_phone         String?                 @db.VarChar(20)
+  is_active             Boolean                 @default(true)
+  created_at            DateTime                @default(now()) @db.Timestamptz(6)
+  updated_at            DateTime                @default(now()) @db.Timestamptz(6)
+  ai_recommendations    ai_recommendations[]
+  complaint_assignments complaint_assignments[]
+  complaint_feedback    complaint_feedback[]
+  complaints            complaints[]
+  users                 users[]
+
+  @@index([code], map: "idx_departments_code")
+  @@index([is_active], map: "idx_departments_is_active")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model users {
+  id                                                                BigInt                     @id @default(autoincrement())
+  username                                                          String                     @unique @db.VarChar(50)
+  password                                                          String                     @db.VarChar(255)
+  email                                                             String                     @unique @db.VarChar(100)
+  full_name                                                         String                     @db.VarChar(100)
+  role                                                              String                     @db.VarChar(20)
+  is_active                                                         Boolean                    @default(true)
+  created_at                                                        DateTime                   @default(now()) @db.Timestamptz(6)
+  updated_at                                                        DateTime                   @default(now()) @db.Timestamptz(6)
+  department_id                                                     BigInt?
+  ai_recommendations                                                ai_recommendations[]
+  complaint_assignments_complaint_assignments_assigned_by_idTousers complaint_assignments[]    @relation("complaint_assignments_assigned_by_idTousers")
+  complaint_assignments_complaint_assignments_assigned_to_idTousers complaint_assignments[]    @relation("complaint_assignments_assigned_to_idTousers")
+  complaint_feedback                                                complaint_feedback[]
+  complaint_status_history                                          complaint_status_history[]
+  complaints_complaints_assigned_to_idTousers                       complaints[]               @relation("complaints_assigned_to_idTousers")
+  complaints_complaints_citizen_idTousers                           complaints[]               @relation("complaints_citizen_idTousers")
+  complaints_complaints_closed_by_user_idTousers                    complaints[]               @relation("complaints_closed_by_user_idTousers")
+  departments                                                       departments?               @relation(fields: [department_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fksbg59w8q63i0oo53rlgvlcnjq")
+
+  @@index([email], map: "idx_users_email")
+  @@index([role], map: "idx_users_role")
+  @@index([username], map: "idx_users_username")
+}

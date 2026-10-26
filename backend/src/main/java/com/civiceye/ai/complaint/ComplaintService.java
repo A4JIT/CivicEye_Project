@@ -30,18 +30,28 @@ public class ComplaintService {
     private final ComplaintStatusHistoryRepository statusHistoryRepository;
     private final DepartmentRecommendationService departmentRecommendationService;
     private final AiRecommendationRepository aiRecommendationRepository;
+    private final DuplicateDetectionService duplicateDetectionService;
 
     public ComplaintService(ComplaintRepository complaintRepository,
                             UserRepository userRepository,
                             FileStorageService fileStorageService) {
-        this(complaintRepository, userRepository, fileStorageService, null, null, null);
+        this(complaintRepository, userRepository, fileStorageService, null, null, null, null);
     }
 
     public ComplaintService(ComplaintRepository complaintRepository,
                             UserRepository userRepository,
                             FileStorageService fileStorageService,
                             ComplaintStatusHistoryRepository statusHistoryRepository) {
-        this(complaintRepository, userRepository, fileStorageService, statusHistoryRepository, null, null);
+        this(complaintRepository, userRepository, fileStorageService, statusHistoryRepository, null, null, null);
+    }
+
+    public ComplaintService(ComplaintRepository complaintRepository,
+                            UserRepository userRepository,
+                            FileStorageService fileStorageService,
+                            ComplaintStatusHistoryRepository statusHistoryRepository,
+                            DepartmentRecommendationService departmentRecommendationService,
+                            AiRecommendationRepository aiRecommendationRepository) {
+        this(complaintRepository, userRepository, fileStorageService, statusHistoryRepository, departmentRecommendationService, aiRecommendationRepository, null);
     }
 
     @org.springframework.beans.factory.annotation.Autowired
@@ -50,13 +60,15 @@ public class ComplaintService {
                             FileStorageService fileStorageService,
                             ComplaintStatusHistoryRepository statusHistoryRepository,
                             DepartmentRecommendationService departmentRecommendationService,
-                            AiRecommendationRepository aiRecommendationRepository) {
+                            AiRecommendationRepository aiRecommendationRepository,
+                            DuplicateDetectionService duplicateDetectionService) {
         this.complaintRepository = complaintRepository;
         this.userRepository = userRepository;
         this.fileStorageService = fileStorageService;
         this.statusHistoryRepository = statusHistoryRepository;
         this.departmentRecommendationService = departmentRecommendationService;
         this.aiRecommendationRepository = aiRecommendationRepository;
+        this.duplicateDetectionService = duplicateDetectionService;
     }
 
     @Transactional
@@ -101,6 +113,33 @@ public class ComplaintService {
                 savedComplaint.setAiRecommendation(savedAiRec);
             } catch (Exception ex) {
                 // Non-blocking fallback to protect complaint submission flow
+            }
+        }
+
+        // Auto-detect and link duplicate complaint on submission if high similarity
+        if (duplicateDetectionService != null) {
+            try {
+                com.civiceye.ai.complaint.dto.DuplicateCheckRequest dupReq = com.civiceye.ai.complaint.dto.DuplicateCheckRequest.builder()
+                        .title(savedComplaint.getTitle())
+                        .description(savedComplaint.getDescription())
+                        .category(savedComplaint.getCategory() != null ? savedComplaint.getCategory().name() : null)
+                        .location(savedComplaint.getLocation())
+                        .latitude(savedComplaint.getLatitude())
+                        .longitude(savedComplaint.getLongitude())
+                        .build();
+                com.civiceye.ai.complaint.dto.DuplicateCheckResponse dupRes = duplicateDetectionService.checkDuplicates(dupReq);
+                if (dupRes != null && dupRes.isDuplicate() && dupRes.getPrimaryMatch() != null) {
+                    com.civiceye.ai.complaint.dto.DuplicateMatchDto match = dupRes.getPrimaryMatch();
+                    if (!match.getComplaintId().equals(savedComplaint.getId()) && match.getSimilarityScore() != null && match.getSimilarityScore() >= 0.60) {
+                        complaintRepository.findById(match.getComplaintId()).ifPresent(parent -> {
+                            savedComplaint.setDuplicateOf(parent);
+                            savedComplaint.setDuplicateScore(match.getSimilarityScore());
+                            complaintRepository.save(savedComplaint);
+                        });
+                    }
+                }
+            } catch (Exception ignored) {
+                // Non-blocking fallback
             }
         }
 

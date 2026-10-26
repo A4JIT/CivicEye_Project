@@ -54,4 +54,13 @@ describe('Login Component', () => {
     const registerLink = screen.getByRole('link', { name: /create an account/i })
     expect(registerLink.getAttribute('href')).toBe('/register')
   })
+
+  it('provides home button to navigate back to homepage', () => {
+    renderWithProviders(<Login />)
+
+    const homeBtn = screen.getByTestId('btn-login-home')
+    expect(homeBtn).toBeDefined()
+    expect(homeBtn.getAttribute('href')).toBe('/')
+    expect(screen.getByText(/back to home/i)).toBeDefined()
+  })
 })

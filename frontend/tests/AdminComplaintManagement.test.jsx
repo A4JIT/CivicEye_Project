@@ -210,39 +210,15 @@ describe('Admin Complaint Management & Triage Suite (Phase 5)', () => {
     })
   })
 
-  it('opens Quick Request Info modal and submits inquiry to citizen', async () => {
-    const infoSpy = vi.spyOn(adminService, 'requestInformation').mockResolvedValue({
-      data: {
-        ...sampleComplaints[0],
-        status: 'NEEDS_INFORMATION',
-        needsInfoRemarks: 'Please provide exact house address.',
-      },
-    })
-
+  it('does not display Information Needed option in admin triage actions', async () => {
     renderWithProviders(<AllComplaints />)
 
     await waitFor(() => {
-      expect(screen.getByTestId('action-info-1')).toBeDefined()
+      expect(screen.getByTestId('action-assign-1')).toBeDefined()
     })
 
-    fireEvent.click(screen.getByTestId('action-info-1'))
-
-    await waitFor(() => {
-      expect(screen.getByTestId('textarea-quick-info-remarks')).toBeDefined()
-    })
-
-    const remarksInput = screen.getByTestId('textarea-quick-info-remarks')
-    fireEvent.change(remarksInput, {
-      target: { value: 'Please provide exact house address.' },
-    })
-
-    fireEvent.click(screen.getByTestId('btn-confirm-quick-info'))
-
-    await waitFor(() => {
-      expect(infoSpy).toHaveBeenCalledWith(1, {
-        remarks: 'Please provide exact house address.',
-      })
-    })
+    expect(screen.queryByTestId('action-info-1')).toBeNull()
+    expect(screen.queryByText(/Information Needed/i)).toBeNull()
   })
 
   it('opens Quick Assign modal and dispatches to department', async () => {

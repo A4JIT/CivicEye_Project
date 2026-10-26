@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
 import DashboardLayout from '../../components/layout/DashboardLayout'
 import dashboardService from '../../services/dashboardService'
 import complaintService from '../../services/complaintService'
 import feedbackService from '../../services/feedbackService'
 import Loader from '../../components/common/Loader'
+import AuthenticatedImage from '../../components/common/AuthenticatedImage'
 
 const DepartmentDashboard = () => {
+  const { user } = useAuth()
   const [data, setData] = useState(null)
   const [complaints, setComplaints] = useState([])
   const [feedbackReviews, setFeedbackReviews] = useState([])
@@ -22,14 +25,16 @@ const DepartmentDashboard = () => {
   const [savingStatus, setSavingStatus] = useState(false)
   const [statusSuccessMsg, setStatusSuccessMsg] = useState(null)
   const [statusErrorMsg, setStatusErrorMsg] = useState(null)
+  const [previewImage, setPreviewImage] = useState(null)
 
   useEffect(() => {
     let isMounted = true
     const fetchData = async () => {
       try {
+        const deptId = user?.departmentId || 1
         const [result, fbData, statsData] = await Promise.all([
-          dashboardService.getDepartmentDashboard(1),
-          feedbackService.getDepartmentFeedback(1).catch(() => ({ data: [] })),
+          dashboardService.getDepartmentDashboard(deptId),
+          feedbackService.getDepartmentFeedback(deptId).catch(() => ({ data: [] })),
           feedbackService.getFeedbackStats().catch(() => ({ data: null })),
         ])
         if (isMounted) {
@@ -140,7 +145,7 @@ const DepartmentDashboard = () => {
     )
   }
 
-  const deptName = data?.departmentName || 'Roads & Traffic'
+  const deptName = data?.departmentName || user?.departmentName || 'Public Works & Roads'
 
   // Phase 8: Calculate satisfaction KPI metrics
   const reviews = feedbackReviews || []
@@ -353,6 +358,37 @@ const DepartmentDashboard = () => {
                     {item.addressText && (
                       <span className="complaint-location">📍 {item.addressText}</span>
                     )}
+                    {item.imageUrl && (
+                      <div style={{ marginTop: '4px' }}>
+                        <button
+                          type="button"
+                          className="photo-proof-badge"
+                          title="Click to view citizen uploaded photo proof"
+                          onClick={() =>
+                            setPreviewImage({
+                              url: item.imageUrl,
+                              title: item.title,
+                              complaintNumber: item.trackingNumber,
+                            })
+                          }
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            background: 'rgba(56, 189, 248, 0.15)',
+                            color: '#38bdf8',
+                            border: '1px solid rgba(56, 189, 248, 0.4)',
+                            borderRadius: '6px',
+                            padding: '2px 8px',
+                            fontSize: '0.75rem',
+                            cursor: 'pointer',
+                            fontWeight: 600,
+                          }}
+                        >
+                          📸 View Defect Photo
+                        </button>
+                      </div>
+                    )}
                   </td>
                   <td>
                     <span className={`badge badge-priority priority-${item.priority?.toLowerCase()}`}>
@@ -428,6 +464,25 @@ const DepartmentDashboard = () => {
                 <span className="badge badge-status status-subtle">
                   {selectedComplaint.status?.replace(/_/g, ' ')}
                 </span>
+                {selectedComplaint.imageUrl && (
+                  <div style={{ marginTop: '10px' }}>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#94a3b8', marginBottom: '4px' }}>
+                      📸 Citizen Reported Defect Photo:
+                    </div>
+                    <AuthenticatedImage
+                      src={selectedComplaint.imageUrl}
+                      alt="Reported Defect"
+                      style={{
+                        width: '100%',
+                        maxHeight: '180px',
+                        objectFit: 'cover',
+                        borderRadius: '6px',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                      }}
+                      allowZoom={true}
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="form-group">
@@ -511,6 +566,102 @@ const DepartmentDashboard = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Lightbox / Preview Modal for Table photo click */}
+      {previewImage && (
+        <div
+          className="modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setPreviewImage(null)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.75)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '20px',
+          }}
+        >
+          <div
+            className="modal-container"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: '#0f172a',
+              border: '1px solid rgba(56, 189, 248, 0.3)',
+              borderRadius: '12px',
+              padding: '20px',
+              maxWidth: '650px',
+              width: '100%',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '16px',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                paddingBottom: '10px',
+              }}
+            >
+              <div>
+                <h4 style={{ margin: 0, color: '#f8fafc', fontSize: '1.1rem' }}>
+                  📸 Reported Defect Photo Proof
+                </h4>
+                <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
+                  {previewImage.complaintNumber} • {previewImage.title}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewImage(null)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#94a3b8',
+                  fontSize: '1.5rem',
+                  cursor: 'pointer',
+                  padding: '4px 8px',
+                }}
+              >
+                ✕
+              </button>
+            </div>
+            <div style={{ textAlign: 'center', minHeight: '260px' }}>
+              <AuthenticatedImage
+                src={previewImage.url}
+                alt="Defect Photo Proof"
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '450px',
+                  borderRadius: '8px',
+                  objectFit: 'contain',
+                }}
+                allowZoom={true}
+              />
+            </div>
+            <div
+              style={{
+                marginTop: '16px',
+                display: 'flex',
+                justifyContent: 'flex-end',
+              }}
+            >
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => setPreviewImage(null)}
+              >
+                Close Preview
+              </button>
+            </div>
           </div>
         </div>
       )}

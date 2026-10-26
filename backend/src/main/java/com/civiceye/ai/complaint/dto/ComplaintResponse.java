@@ -48,6 +48,10 @@ public class ComplaintResponse {
     private Integer feedbackRating;
     private String feedbackComments;
     private AiRecommendationResponse aiRecommendation;
+    private Long duplicateOfId;
+    private String duplicateOfNumber;
+    private Double duplicateScore;
+    private Integer upvotesCount;
 
     public ComplaintResponse() {
     }
@@ -105,6 +109,12 @@ public class ComplaintResponse {
         if (complaint.getAiRecommendation() != null) {
             res.setAiRecommendation(AiRecommendationResponse.fromEntity(complaint.getAiRecommendation()));
         }
+        if (complaint.getDuplicateOf() != null) {
+            res.setDuplicateOfId(complaint.getDuplicateOf().getId());
+            res.setDuplicateOfNumber(complaint.getDuplicateOf().getComplaintNumber());
+        }
+        res.setDuplicateScore(complaint.getDuplicateScore());
+        res.setUpvotesCount(complaint.getUpvotesCount() != null ? complaint.getUpvotesCount() : 1);
         return res;
     }
 
@@ -184,6 +194,14 @@ public class ComplaintResponse {
     public void setFeedbackComments(String feedbackComments) { this.feedbackComments = feedbackComments; }
     public AiRecommendationResponse getAiRecommendation() { return aiRecommendation; }
     public void setAiRecommendation(AiRecommendationResponse aiRecommendation) { this.aiRecommendation = aiRecommendation; }
+    public Long getDuplicateOfId() { return duplicateOfId; }
+    public void setDuplicateOfId(Long duplicateOfId) { this.duplicateOfId = duplicateOfId; }
+    public String getDuplicateOfNumber() { return duplicateOfNumber; }
+    public void setDuplicateOfNumber(String duplicateOfNumber) { this.duplicateOfNumber = duplicateOfNumber; }
+    public Double getDuplicateScore() { return duplicateScore; }
+    public void setDuplicateScore(Double duplicateScore) { this.duplicateScore = duplicateScore; }
+    public Integer getUpvotesCount() { return upvotesCount; }
+    public void setUpvotesCount(Integer upvotesCount) { this.upvotesCount = upvotesCount; }
 
     public static ComplaintResponseBuilder builder() {
         return new ComplaintResponseBuilder();
@@ -228,6 +246,15 @@ public class ComplaintResponse {
         private Integer feedbackRating;
         private String feedbackComments;
         private AiRecommendationResponse aiRecommendation;
+        private Long duplicateOfId;
+        private String duplicateOfNumber;
+        private Double duplicateScore;
+        private Integer upvotesCount = 1;
+
+        public ComplaintResponseBuilder duplicateOfId(Long duplicateOfId) { this.duplicateOfId = duplicateOfId; return this; }
+        public ComplaintResponseBuilder duplicateOfNumber(String duplicateOfNumber) { this.duplicateOfNumber = duplicateOfNumber; return this; }
+        public ComplaintResponseBuilder duplicateScore(Double duplicateScore) { this.duplicateScore = duplicateScore; return this; }
+        public ComplaintResponseBuilder upvotesCount(Integer upvotesCount) { this.upvotesCount = upvotesCount; return this; }
 
         public ComplaintResponseBuilder id(Long id) { this.id = id; return this; }
         public ComplaintResponseBuilder complaintNumber(String complaintNumber) { this.complaintNumber = complaintNumber; return this; }
@@ -308,6 +335,10 @@ public class ComplaintResponse {
             res.setFeedbackRating(this.feedbackRating);
             res.setFeedbackComments(this.feedbackComments);
             res.setAiRecommendation(this.aiRecommendation);
+            res.setDuplicateOfId(this.duplicateOfId);
+            res.setDuplicateOfNumber(this.duplicateOfNumber);
+            res.setDuplicateScore(this.duplicateScore);
+            res.setUpvotesCount(this.upvotesCount != null ? this.upvotesCount : 1);
             return res;
         }
     }

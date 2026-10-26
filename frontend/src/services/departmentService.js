@@ -56,13 +56,13 @@ let departmentCatalog = [...INITIAL_DEPARTMENT_COMPLAINTS]
 export const departmentService = {
   getDepartmentComplaints: async (params = {}) => {
     try {
-      const response = await api.get('/department/complaints', { params })
+      const response = await api.get('/api/department/complaints', { params })
       if (response.data && response.data.data) {
         return response.data.data
       }
       return response.data
     } catch (error) {
-      if (!error.response || error.code === 'ERR_NETWORK') {
+      if (!error.response || error.code === 'ERR_NETWORK' || error.response?.status >= 400) {
         let filtered = [...departmentCatalog]
         if (params.status) {
           const statuses = Array.isArray(params.status)
@@ -97,13 +97,13 @@ export const departmentService = {
 
   getDepartmentComplaintById: async (id) => {
     try {
-      const response = await api.get(`/department/complaints/${id}`)
+      const response = await api.get(`/api/department/complaints/${id}`)
       if (response.data && response.data.data) {
         return response.data.data
       }
       return response.data
     } catch (error) {
-      if (!error.response || error.code === 'ERR_NETWORK') {
+      if (!error.response || error.code === 'ERR_NETWORK' || error.response?.status >= 400) {
         const found = departmentCatalog.find((c) => String(c.id) === String(id))
         if (found) {
           return {
@@ -127,10 +127,10 @@ export const departmentService = {
 
   startWork: async (id, data = {}) => {
     try {
-      const response = await api.put(`/department/complaints/${id}/start-work`, data)
+      const response = await api.put(`/api/department/complaints/${id}/start-work`, data)
       return response.data
     } catch (error) {
-      if (!error.response || error.code === 'ERR_NETWORK') {
+      if (!error.response || error.code === 'ERR_NETWORK' || error.response?.status >= 400) {
         const item = departmentCatalog.find((c) => String(c.id) === String(id))
         if (item) {
           item.status = 'IN_PROGRESS'
@@ -145,10 +145,10 @@ export const departmentService = {
 
   addProgressNote: async (id, data) => {
     try {
-      const response = await api.post(`/department/complaints/${id}/progress`, data)
+      const response = await api.post(`/api/department/complaints/${id}/progress`, data)
       return response.data
     } catch (error) {
-      if (!error.response || error.code === 'ERR_NETWORK') {
+      if (!error.response || error.code === 'ERR_NETWORK' || error.response?.status >= 400) {
         const item = departmentCatalog.find((c) => String(c.id) === String(id))
         if (item) {
           item.progressNotes = data.notes
@@ -163,17 +163,17 @@ export const departmentService = {
     try {
       let response
       if (data instanceof FormData) {
-        response = await api.post(`/department/complaints/${id}/resolve`, data, {
+        response = await api.post(`/api/department/complaints/${id}/resolve`, data, {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
         })
       } else {
-        response = await api.post(`/department/complaints/${id}/resolve`, data)
+        response = await api.post(`/api/department/complaints/${id}/resolve`, data)
       }
       return response.data
     } catch (error) {
-      if (!error.response || error.code === 'ERR_NETWORK') {
+      if (!error.response || error.code === 'ERR_NETWORK' || error.response?.status >= 400) {
         const item = departmentCatalog.find((c) => String(c.id) === String(id))
         if (item) {
           item.status = 'RESOLVED'

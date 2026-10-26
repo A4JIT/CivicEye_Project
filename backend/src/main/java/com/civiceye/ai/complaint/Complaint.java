@@ -131,6 +131,21 @@ public class Complaint {
     @Builder.Default
     private List<ComplaintStatusHistory> statusHistory = new ArrayList<>();
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "duplicate_of_id")
+    private Complaint duplicateOf;
+
+    @Column(name = "duplicate_score")
+    private Double duplicateScore;
+
+    @Column(name = "upvotes_count", nullable = false)
+    @Builder.Default
+    private Integer upvotesCount = 1;
+
+    @OneToMany(mappedBy = "duplicateOf", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<Complaint> duplicates = new ArrayList<>();
+
     @OneToMany(mappedBy = "complaint", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderBy("createdAt ASC")
     @Builder.Default
@@ -249,10 +264,49 @@ public class Complaint {
         assignment.setComplaint(this);
     }
 
+    public Complaint getDuplicateOf() {
+        return duplicateOf;
+    }
+
+    public void setDuplicateOf(Complaint duplicateOf) {
+        this.duplicateOf = duplicateOf;
+    }
+
+    public Double getDuplicateScore() {
+        return duplicateScore;
+    }
+
+    public void setDuplicateScore(Double duplicateScore) {
+        this.duplicateScore = duplicateScore;
+    }
+
+    public Integer getUpvotesCount() {
+        return upvotesCount;
+    }
+
+    public void setUpvotesCount(Integer upvotesCount) {
+        this.upvotesCount = upvotesCount;
+    }
+
+    public List<Complaint> getDuplicates() {
+        if (duplicates == null) {
+            duplicates = new ArrayList<>();
+        }
+        return duplicates;
+    }
+
+    public void setDuplicates(List<Complaint> duplicates) {
+        this.duplicates = duplicates != null ? duplicates : new ArrayList<>();
+    }
+
     @PrePersist
     protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
+        if (this.createdAt == null) {
+            this.createdAt = LocalDateTime.now();
+        }
+        if (this.updatedAt == null) {
+            this.updatedAt = LocalDateTime.now();
+        }
         if (this.status == null) {
             this.status = ComplaintStatus.SUBMITTED;
         }
@@ -314,6 +368,10 @@ public class Complaint {
         private AiRecommendation aiRecommendation;
         private List<ComplaintStatusHistory> statusHistory = new ArrayList<>();
         private List<ComplaintAssignment> assignments = new ArrayList<>();
+        private Complaint duplicateOf;
+        private Double duplicateScore;
+        private Integer upvotesCount = 1;
+        private List<Complaint> duplicates = new ArrayList<>();
 
         public ComplaintBuilder id(Long id) { this.id = id; return this; }
         public ComplaintBuilder complaintNumber(String complaintNumber) { this.complaintNumber = complaintNumber; return this; }
@@ -355,6 +413,13 @@ public class Complaint {
             this.assignments = assignments != null ? assignments : new ArrayList<>();
             return this;
         }
+        public ComplaintBuilder duplicateOf(Complaint duplicateOf) { this.duplicateOf = duplicateOf; return this; }
+        public ComplaintBuilder duplicateScore(Double duplicateScore) { this.duplicateScore = duplicateScore; return this; }
+        public ComplaintBuilder upvotesCount(Integer upvotesCount) { this.upvotesCount = upvotesCount; return this; }
+        public ComplaintBuilder duplicates(List<Complaint> duplicates) {
+            this.duplicates = duplicates != null ? duplicates : new ArrayList<>();
+            return this;
+        }
 
         public Complaint build() {
             Complaint c = new Complaint();
@@ -392,6 +457,10 @@ public class Complaint {
             c.setAiRecommendation(this.aiRecommendation);
             c.setStatusHistory(this.statusHistory != null ? this.statusHistory : new ArrayList<>());
             c.setAssignments(this.assignments != null ? this.assignments : new ArrayList<>());
+            c.setDuplicateOf(this.duplicateOf);
+            c.setDuplicateScore(this.duplicateScore);
+            c.setUpvotesCount(this.upvotesCount != null ? this.upvotesCount : 1);
+            c.setDuplicates(this.duplicates != null ? this.duplicates : new ArrayList<>());
             return c;
         }
     }

@@ -2,15 +2,18 @@ import { Routes, Route } from 'react-router-dom'
 import Home from '../pages/public/Home'
 import Login from '../pages/public/Login'
 import Register from '../pages/public/Register'
+import AdminRegister from '../pages/public/AdminRegister'
 import NotFound from '../pages/public/NotFound'
 import ProtectedRoute from '../components/common/ProtectedRoute'
 import { useAuth } from '../context/AuthContext'
 import CitizenDashboard from '../pages/citizen/CitizenDashboard'
+import MyComplaints from '../pages/citizen/MyComplaints'
 import CreateComplaint from '../pages/citizen/CreateComplaint'
 import ComplaintTracking from '../pages/citizen/ComplaintTracking'
 import AdminDashboard from '../pages/admin/AdminDashboard'
 import AllComplaints from '../pages/admin/AllComplaints'
 import ReviewComplaint from '../pages/admin/ReviewComplaint'
+import DepartmentStaffManagement from '../pages/admin/DepartmentStaffManagement'
 import DepartmentDashboard from '../pages/department/DepartmentDashboard'
 import DepartmentComplaints from '../pages/department/DepartmentComplaints'
 
@@ -34,6 +37,8 @@ const AppRoutes = () => {
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/admin/register" element={<AdminRegister />} />
+      <Route path="/register/admin" element={<AdminRegister />} />
       
       {/* Dynamic Role-Based Dashboard Route */}
       <Route
@@ -87,6 +92,14 @@ const AppRoutes = () => {
         }
       />
       <Route
+        path="/admin/staff"
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN']}>
+            <DepartmentStaffManagement />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/dashboard/department"
         element={
           <ProtectedRoute allowedRoles={['DEPARTMENT_USER', 'ADMIN']}>
@@ -125,6 +138,16 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute allowedRoles={['CITIZEN', 'ADMIN']}>
             <CreateComplaint />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Citizen Complaint List Route */}
+      <Route
+        path="/complaints/my"
+        element={
+          <ProtectedRoute allowedRoles={['CITIZEN', 'ADMIN']}>
+            <MyComplaints />
           </ProtectedRoute>
         }
       />

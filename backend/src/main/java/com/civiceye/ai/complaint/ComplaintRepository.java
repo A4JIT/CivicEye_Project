@@ -57,4 +57,10 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long>, Jpa
     long countCriticalPendingByDepartment(@Param("deptId") Long deptId);
 
     Optional<Complaint> findTopByComplaintNumberStartingWithOrderByIdDesc(String prefix);
+
+    @Query("SELECT c FROM Complaint c WHERE c.status NOT IN ('RESOLVED', 'CLOSED', 'REJECTED') AND c.category = :category")
+    List<Complaint> findActiveByCategory(@Param("category") ComplaintCategory category);
+
+    @Query("SELECT c FROM Complaint c WHERE c.status NOT IN ('RESOLVED', 'CLOSED', 'REJECTED')")
+    List<Complaint> findAllActive();
 }

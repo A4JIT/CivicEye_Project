@@ -134,6 +134,7 @@ describe('Department Management & Work Console Suite (Phase 6)', () => {
     renderWithProviders(<DepartmentComplaints />)
 
     expect(await screen.findByText(/Department Work Console/i)).toBeDefined()
+    expect(await screen.findByTestId('complaint-row-100')).toBeDefined()
     expect(screen.getByTestId('dept-search-input')).toBeDefined()
     expect(screen.getByTestId('department-filter-tabs')).toBeDefined()
 

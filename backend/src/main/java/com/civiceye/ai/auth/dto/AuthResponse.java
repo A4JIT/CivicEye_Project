@@ -20,6 +20,9 @@ public class AuthResponse {
     private String email;
     private String fullName;
     private Role role;
+    private Long departmentId;
+    private String departmentName;
+    private String departmentCode;
     private Long expiresIn;
 
     public String getToken() {
@@ -78,6 +81,30 @@ public class AuthResponse {
         this.role = role;
     }
 
+    public Long getDepartmentId() {
+        return departmentId;
+    }
+
+    public void setDepartmentId(Long departmentId) {
+        this.departmentId = departmentId;
+    }
+
+    public String getDepartmentName() {
+        return departmentName;
+    }
+
+    public void setDepartmentName(String departmentName) {
+        this.departmentName = departmentName;
+    }
+
+    public String getDepartmentCode() {
+        return departmentCode;
+    }
+
+    public void setDepartmentCode(String departmentCode) {
+        this.departmentCode = departmentCode;
+    }
+
     public Long getExpiresIn() {
         return expiresIn;
     }
@@ -98,6 +125,9 @@ public class AuthResponse {
         private String email;
         private String fullName;
         private Role role;
+        private Long departmentId;
+        private String departmentName;
+        private String departmentCode;
         private Long expiresIn;
 
         public AuthResponseBuilder token(String token) {
@@ -135,6 +165,21 @@ public class AuthResponse {
             return this;
         }
 
+        public AuthResponseBuilder departmentId(Long departmentId) {
+            this.departmentId = departmentId;
+            return this;
+        }
+
+        public AuthResponseBuilder departmentName(String departmentName) {
+            this.departmentName = departmentName;
+            return this;
+        }
+
+        public AuthResponseBuilder departmentCode(String departmentCode) {
+            this.departmentCode = departmentCode;
+            return this;
+        }
+
         public AuthResponseBuilder expiresIn(Long expiresIn) {
             this.expiresIn = expiresIn;
             return this;
@@ -149,6 +194,9 @@ public class AuthResponse {
             resp.setEmail(this.email);
             resp.setFullName(this.fullName);
             resp.setRole(this.role);
+            resp.setDepartmentId(this.departmentId);
+            resp.setDepartmentName(this.departmentName);
+            resp.setDepartmentCode(this.departmentCode);
             resp.setExpiresIn(this.expiresIn);
             return resp;
         }

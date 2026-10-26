@@ -182,6 +182,62 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.success").value(false));
     }
 
+    @Test
+    @DisplayName("POST /api/auth/register-admin should return HTTP 201 Created when admin registration is successful")
+    void registerAdmin_Returns201_WhenValid() throws Exception {
+        com.civiceye.ai.auth.dto.AdminRegisterRequest request = com.civiceye.ai.auth.dto.AdminRegisterRequest.builder()
+                .username("super_admin")
+                .email("admin@civiceye.com")
+                .password("Password@123")
+                .fullName("Super Admin")
+                .adminCode("CIVICEYE-ADMIN-2026-SECURE")
+                .build();
+
+        AuthResponse adminResponse = AuthResponse.builder()
+                .token("admin-jwt-token")
+                .tokenType("Bearer")
+                .userId(10L)
+                .username("super_admin")
+                .email("admin@civiceye.com")
+                .fullName("Super Admin")
+                .role(Role.ADMIN)
+                .expiresIn(86400000L)
+                .build();
+
+        when(authService.registerAdmin(any(com.civiceye.ai.auth.dto.AdminRegisterRequest.class)))
+                .thenReturn(adminResponse);
+
+        mockMvc.perform(post("/api/auth/register-admin")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.username").value("super_admin"))
+                .andExpect(jsonPath("$.data.role").value("ADMIN"));
+    }
+
+    @Test
+    @DisplayName("POST /api/auth/register-admin should return HTTP 401 when code is invalid")
+    void registerAdmin_Returns401_WhenCodeInvalid() throws Exception {
+        com.civiceye.ai.auth.dto.AdminRegisterRequest request = com.civiceye.ai.auth.dto.AdminRegisterRequest.builder()
+                .username("super_admin")
+                .email("admin@civiceye.com")
+                .password("Password@123")
+                .fullName("Super Admin")
+                .adminCode("WRONG_CODE")
+                .build();
+
+        when(authService.registerAdmin(any(com.civiceye.ai.auth.dto.AdminRegisterRequest.class)))
+                .thenThrow(new UnauthorizedException("Invalid admin authorization code. Admin account creation is restricted."));
+
+        mockMvc.perform(post("/api/auth/register-admin")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Invalid admin authorization code. Admin account creation is restricted."));
+    }
+
     // ==========================================
     // HEALTH CHECK TEST
     // ==========================================

@@ -78,6 +78,12 @@ const Login = () => {
   return (
     <div className="auth-page">
       <div className="auth-card">
+        <div className="auth-top-bar">
+          <Link to="/" className="btn-auth-back-home" data-testid="btn-login-home" title="Return to Homepage">
+            ← 🏠 Back to Home
+          </Link>
+        </div>
+
         <div className="auth-header">
           <h1>Welcome Back</h1>
           <p>Sign in to your CivicEye AI account to continue</p>
@@ -164,9 +170,22 @@ const Login = () => {
           </div>
         </div>
 
-        <div className="auth-footer">
-          Don't have an account?{' '}
-          <Link to="/register">Create an account</Link>
+        <div className="auth-footer" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div>
+            Don't have an account?{' '}
+            <Link to="/register">Create an account</Link>
+          </div>
+          <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '8px', fontSize: '0.85rem' }}>
+            <span style={{ color: '#94a3b8' }}>Administrator access? </span>
+            <Link to="/admin/register" style={{ color: '#38bdf8', fontWeight: 600 }}>
+              Register with Admin Code →
+            </Link>
+          </div>
+          <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '8px', textAlign: 'center' }}>
+            <Link to="/" className="auth-home-link" data-testid="link-login-home" style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
+              🏠 Return to Homepage
+            </Link>
+          </div>
         </div>
       </div>
     </div>

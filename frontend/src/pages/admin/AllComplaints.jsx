@@ -9,12 +9,12 @@ import Loader from '../../components/common/Loader'
 import Modal from '../../components/common/Modal'
 import ComplaintAuditTimeline from '../../components/complaints/ComplaintAuditTimeline'
 import historyService from '../../services/historyService'
+import AuthenticatedImage from '../../components/common/AuthenticatedImage'
 
 const STATUS_TABS = [
   { id: 'ALL', label: 'All Complaints', icon: '📑' },
   { id: 'SUBMITTED', label: 'Pending Review', icon: '📥' },
   { id: 'UNDER_REVIEW', label: 'Under Review', icon: '🔍' },
-  { id: 'NEEDS_INFORMATION', label: 'Needs Info', icon: '❓' },
   { id: 'ASSIGNED', label: 'Assigned', icon: '🏢' },
   { id: 'IN_PROGRESS', label: 'In Progress', icon: '⚡' },
   { id: 'RESOLVED', label: 'Resolved', icon: '✅' },
@@ -69,6 +69,7 @@ const AllComplaints = () => {
 
   // Selected Complaint for Drawer Review
   const [selectedComplaint, setSelectedComplaint] = useState(null)
+  const [previewImage, setPreviewImage] = useState(null)
 
   // Direct Action Modals from table
   const [quickActionModal, setQuickActionModal] = useState({
@@ -92,7 +93,7 @@ const AllComplaints = () => {
         adminService.getAllComplaints(),
       ])
       setDepartments(deptList || [])
-      setComplaints(data?.complaints || [])
+      setComplaints(data?.complaints || (Array.isArray(data) ? data : []))
     } catch (err) {
       console.error('Failed to load complaints in triage console', err)
     } finally {
@@ -657,6 +658,32 @@ const AllComplaints = () => {
                           </span>
                         )}
                         <span className="complaint-location">📍 {item.location}</span>
+                        {item.imageUrl && (
+                          <button
+                            type="button"
+                            className="photo-proof-badge"
+                            title="Click to view citizen uploaded photo proof"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setPreviewImage({ url: item.imageUrl, title: item.title, complaintNumber: item.complaintNumber })
+                            }}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              background: 'rgba(56, 189, 248, 0.15)',
+                              color: '#38bdf8',
+                              border: '1px solid rgba(56, 189, 248, 0.4)',
+                              borderRadius: '6px',
+                              padding: '2px 8px',
+                              fontSize: '0.75rem',
+                              cursor: 'pointer',
+                              fontWeight: 600,
+                            }}
+                          >
+                            📸 View Photo Proof
+                          </button>
+                        )}
                       </div>
                     </td>
 
@@ -710,20 +737,6 @@ const AllComplaints = () => {
                           data-testid={`action-assign-${item.id}`}
                         >
                           🏢 Assign
-                        </button>
-
-                        <button
-                          type="button"
-                          className="btn-action-pill btn-info"
-                          title="Request additional information from citizen"
-                          onClick={() => {
-                            setQuickInfoRemarks('')
-                            setModalError('')
-                            setQuickActionModal({ type: 'INFO', complaint: item })
-                          }}
-                          data-testid={`action-info-${item.id}`}
-                        >
-                          ❓ Info
                         </button>
 
                         <button
@@ -848,49 +861,7 @@ const AllComplaints = () => {
           </div>
         </Modal>
 
-        {/* Quick Info Modal */}
-        <Modal
-          isOpen={quickActionModal.type === 'INFO'}
-          onClose={() => setQuickActionModal({ type: null, complaint: null })}
-          title={`Request Details for ${quickActionModal.complaint?.complaintNumber}`}
-          footer={
-            <>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => setQuickActionModal({ type: null, complaint: null })}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary"
-                disabled={quickActionLoading || !quickInfoRemarks.trim()}
-                onClick={handleQuickInfo}
-                data-testid="btn-confirm-quick-info"
-              >
-                {quickActionLoading ? 'Sending...' : 'Send Request'}
-              </button>
-            </>
-          }
-        >
-          <div className="modal-inner-form">
-            {modalError && <div className="alert alert-error">{modalError}</div>}
-            <div className="form-group">
-              <label className="form-label">
-                Information Needed <span className="text-danger">*</span>
-              </label>
-              <textarea
-                className="form-textarea"
-                rows={3}
-                placeholder="Ask citizen for missing photos, landmarks, or details..."
-                value={quickInfoRemarks}
-                onChange={(e) => setQuickInfoRemarks(e.target.value)}
-                data-testid="textarea-quick-info-remarks"
-              />
-            </div>
-          </div>
-        </Modal>
+
 
         {/* Quick Assign Modal */}
         <Modal
@@ -1017,6 +988,44 @@ const AllComplaints = () => {
           >
             <div className="audit-modal-body" data-testid="audit-modal-content">
               <ComplaintAuditTimeline complaintId={auditModalComplaint.id} />
+            </div>
+          </Modal>
+        )}
+
+        {/* Standalone Evidence Photo Preview Modal */}
+        {previewImage && (
+          <Modal
+            isOpen={Boolean(previewImage)}
+            onClose={() => setPreviewImage(null)}
+            title={`📸 Citizen Photo Evidence: ${previewImage.complaintNumber}`}
+            maxWidth="700px"
+            footer={
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setPreviewImage(null)}
+              >
+                Close Preview
+              </button>
+            }
+          >
+            <div style={{ textAlign: 'center', padding: '1rem' }}>
+              <div style={{ marginBottom: '1rem', color: '#94a3b8', fontSize: '0.9rem', textAlign: 'left' }}>
+                <strong>Defect:</strong> {previewImage.title}
+              </div>
+              <AuthenticatedImage
+                src={previewImage.url}
+                alt="Citizen Defect Evidence Proof"
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '65vh',
+                  borderRadius: '10px',
+                  boxShadow: '0 8px 30px rgba(0, 0, 0, 0.4)',
+                  objectFit: 'contain',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                }}
+                allowZoom={true}
+              />
             </div>
           </Modal>
         )}

@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: civiceye-db-prod
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-civiceye}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "5432:5432"
+    volumes:
+      - civiceye_pgdata_prod:/var/lib/postgresql/data
+      - ./database/migrations/V1__create_users.sql:/docker-entrypoint-initdb.d/01_v1.sql
+      - ./database/migrations/V2__create_departments.sql:/docker-entrypoint-initdb.d/02_v2.sql
+      - ./database/migrations/V3__create_complaints.sql:/docker-entrypoint-initdb.d/03_v3.sql
+      - ./database/migrations/V4__create_assignments.sql:/docker-entrypoint-initdb.d/04_v4.sql
+      - ./database/migrations/V5__create_status_history.sql:/docker-entrypoint-initdb.d/05_v5.sql
+      - ./database/migrations/V6__create_feedback.sql:/docker-entrypoint-initdb.d/06_v6.sql
+      - ./database/migrations/V7__create_admin_triage_audit.sql:/docker-entrypoint-initdb.d/07_v7.sql
+      - ./database/migrations/V8__create_department_resolution_schema.sql:/docker-entrypoint-initdb.d/08_v8.sql
+      - ./database/migrations/V9__create_ai_recommendation_schema.sql:/docker-entrypoint-initdb.d/09_v9.sql
+      - ./database/migrations/V10__create_feedback_and_closure_schema.sql:/docker-entrypoint-initdb.d/10_v10.sql
+      - ./database/migrations/V11__optimize_complaint_history_and_monitoring.sql:/docker-entrypoint-initdb.d/11_v11.sql
+      - ./database/seed/development_data.sql:/docker-entrypoint-initdb.d/12_seed.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d civiceye"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: civiceye-backend-prod
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PORT: 8080
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:-civiceye}
+      DB_USER: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      JWT_SECRET: ${JWT_SECRET:-civiceye_super_production_secret_key_9876543210}
+      ADMIN_SECRET_CODE: ${ADMIN_SECRET_CODE:-CIVICEYE-ADMIN-2026-SECURE}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:5173,http://localhost:80}
+    ports:
+      - "8080:8080"
+    volumes:
+      - civiceye_uploads_prod:/app/uploads
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
+    container_name: civiceye-frontend-prod
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+
+volumes:
+  civiceye_pgdata_prod:
+  civiceye_uploads_prod:

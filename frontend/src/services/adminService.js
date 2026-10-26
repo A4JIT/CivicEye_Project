@@ -128,6 +128,47 @@ const INITIAL_MOCK_COMPLAINTS = [
 
 let memoryCatalog = [...INITIAL_MOCK_COMPLAINTS]
 
+const INITIAL_MOCK_STAFF = [
+  {
+    id: 3,
+    username: 'officer_sharma',
+    fullName: 'Rajesh Sharma',
+    email: 'dept_roads@civiceye.com',
+    role: 'DEPARTMENT_USER',
+    departmentId: 1,
+    departmentName: 'Public Works & Roads',
+    departmentCode: 'ROAD_WORKS',
+    isActive: true,
+    createdAt: new Date(Date.now() - 3600000 * 24 * 10).toISOString(),
+  },
+  {
+    id: 4,
+    username: 'officer_kumar',
+    fullName: 'Anil Kumar',
+    email: 'dept_water@civiceye.com',
+    role: 'DEPARTMENT_USER',
+    departmentId: 3,
+    departmentName: 'Water Supply & Sewerage',
+    departmentCode: 'WATER_SUPPLY',
+    isActive: true,
+    createdAt: new Date(Date.now() - 3600000 * 24 * 7).toISOString(),
+  },
+  {
+    id: 5,
+    username: 'officer_priya',
+    fullName: 'Priya Sundaram',
+    email: 'dept_power@civiceye.com',
+    role: 'DEPARTMENT_USER',
+    departmentId: 2,
+    departmentName: 'Electricity & Street Lighting',
+    departmentCode: 'ELECTRICITY',
+    isActive: true,
+    createdAt: new Date(Date.now() - 3600000 * 24 * 4).toISOString(),
+  },
+]
+
+let memoryStaff = [...INITIAL_MOCK_STAFF]
+
 export const adminService = {
   getDepartments: async () => {
     try {
@@ -143,12 +184,13 @@ export const adminService = {
 
   getAllComplaints: async (params = {}) => {
     try {
-      const response = await api.get('/admin/complaints', { params })
+      const response = await api.get('/api/admin/complaints', { params })
       if (response.data && response.data.data) {
         return response.data.data
       }
+      return response.data
     } catch (error) {
-      if (!error.response || error.code === 'ERR_NETWORK') {
+      if (!error.response || error.code === 'ERR_NETWORK' || error.response?.status >= 400) {
         // Filter in memory for fallback
         let filtered = [...memoryCatalog]
         if (params.status) {
@@ -190,12 +232,13 @@ export const adminService = {
 
   getComplaintById: async (id) => {
     try {
-      const response = await api.get(`/complaints/${id}`)
+      const response = await api.get(`/api/complaints/${id}`)
       if (response.data && response.data.data) {
         return response.data.data
       }
+      return response.data
     } catch (error) {
-      if (!error.response || error.code === 'ERR_NETWORK') {
+      if (!error.response || error.code === 'ERR_NETWORK' || error.response?.status >= 400) {
         const found = memoryCatalog.find((c) => String(c.id) === String(id))
         if (found) return found
       }
@@ -205,10 +248,10 @@ export const adminService = {
 
   reviewComplaint: async (id, data) => {
     try {
-      const response = await api.put(`/admin/complaints/${id}/review`, data)
+      const response = await api.put(`/api/admin/complaints/${id}/review`, data)
       return response.data
     } catch (error) {
-      if (!error.response || error.code === 'ERR_NETWORK') {
+      if (!error.response || error.code === 'ERR_NETWORK' || error.response?.status >= 400) {
         const item = memoryCatalog.find((c) => String(c.id) === String(id))
         if (item) {
           item.status = 'UNDER_REVIEW'
@@ -230,10 +273,10 @@ export const adminService = {
 
   rejectComplaint: async (id, data) => {
     try {
-      const response = await api.put(`/admin/complaints/${id}/reject`, data)
+      const response = await api.put(`/api/admin/complaints/${id}/reject`, data)
       return response.data
     } catch (error) {
-      if (!error.response || error.code === 'ERR_NETWORK') {
+      if (!error.response || error.code === 'ERR_NETWORK' || error.response?.status >= 400) {
         const item = memoryCatalog.find((c) => String(c.id) === String(id))
         if (item) {
           item.status = 'REJECTED'
@@ -248,10 +291,10 @@ export const adminService = {
 
   requestInformation: async (id, data) => {
     try {
-      const response = await api.put(`/admin/complaints/${id}/request-info`, data)
+      const response = await api.put(`/api/admin/complaints/${id}/request-info`, data)
       return response.data
     } catch (error) {
-      if (!error.response || error.code === 'ERR_NETWORK') {
+      if (!error.response || error.code === 'ERR_NETWORK' || error.response?.status >= 400) {
         const item = memoryCatalog.find((c) => String(c.id) === String(id))
         if (item) {
           item.status = 'NEEDS_INFORMATION'
@@ -265,10 +308,10 @@ export const adminService = {
 
   assignDepartment: async (id, data) => {
     try {
-      const response = await api.put(`/admin/complaints/${id}/assign`, data)
+      const response = await api.put(`/api/admin/complaints/${id}/assign`, data)
       return response.data
     } catch (error) {
-      if (!error.response || error.code === 'ERR_NETWORK') {
+      if (!error.response || error.code === 'ERR_NETWORK' || error.response?.status >= 400) {
         const item = memoryCatalog.find((c) => String(c.id) === String(id))
         if (item) {
           item.departmentId = data.departmentId
@@ -288,16 +331,79 @@ export const adminService = {
 
   closeComplaint: async (id, data = {}) => {
     try {
-      const response = await api.post(`/admin/complaints/${id}/close`, data)
+      const response = await api.post(`/api/admin/complaints/${id}/close`, data)
       return response.data
     } catch (error) {
-      if (!error.response || error.code === 'ERR_NETWORK') {
+      if (!error.response || error.code === 'ERR_NETWORK' || error.response?.status >= 400) {
         const item = memoryCatalog.find((c) => String(c.id) === String(id))
         if (item) {
           item.status = 'CLOSED'
           item.closedAt = new Date().toISOString()
           if (data.closureRemarks) item.closureRemarks = data.closureRemarks
           return { success: true, data: { ...item } }
+        }
+      }
+      throw error
+    }
+  },
+
+  getDepartmentStaff: async () => {
+    try {
+      const response = await api.get('/api/admin/department-staff')
+      if (response.data && response.data.data) {
+        return response.data.data
+      }
+      return response.data
+    } catch (error) {
+      if (!error.response || error.code === 'ERR_NETWORK' || error.response?.status >= 400) {
+        return [...memoryStaff]
+      }
+      throw error
+    }
+  },
+
+  createDepartmentStaff: async (staffData) => {
+    try {
+      const response = await api.post('/api/admin/department-staff', staffData)
+      if (response.data && response.data.data) {
+        return response.data.data
+      }
+      return response.data
+    } catch (error) {
+      if (!error.response || error.code === 'ERR_NETWORK' || error.response?.status >= 400) {
+        const dept = MOCK_DEPARTMENTS.find((d) => d.id === Number(staffData.departmentId))
+        const newStaff = {
+          id: Date.now(),
+          username: staffData.username,
+          fullName: staffData.fullName,
+          email: staffData.email,
+          role: 'DEPARTMENT_USER',
+          departmentId: Number(staffData.departmentId),
+          departmentName: dept ? dept.name : 'Municipal Department',
+          departmentCode: dept ? dept.code : 'DEPT',
+          isActive: true,
+          createdAt: new Date().toISOString(),
+        }
+        memoryStaff.unshift(newStaff)
+        return newStaff
+      }
+      throw error
+    }
+  },
+
+  toggleStaffStatus: async (id) => {
+    try {
+      const response = await api.patch(`/api/admin/department-staff/${id}/toggle-status`)
+      if (response.data && response.data.data) {
+        return response.data.data
+      }
+      return response.data
+    } catch (error) {
+      if (!error.response || error.code === 'ERR_NETWORK' || error.response?.status >= 400) {
+        const staff = memoryStaff.find((s) => String(s.id) === String(id))
+        if (staff) {
+          staff.isActive = !staff.isActive
+          return { ...staff }
         }
       }
       throw error
