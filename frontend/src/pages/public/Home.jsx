@@ -13,7 +13,7 @@ const Home = () => {
         </div>
         <h1 className="hero-title">
           Smarter Cities with <br />
-          <span className="hero-gradient">CivicEye AI</span>
+          <span className="hero-gradient">JanNayak AI</span>
         </h1>
         <p className="hero-subtitle">
           Empowering citizens and municipal departments with intelligent complaint

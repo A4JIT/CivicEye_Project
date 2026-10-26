@@ -86,7 +86,7 @@ const Login = () => {
 
         <div className="auth-header">
           <h1>Welcome Back</h1>
-          <p>Sign in to your CivicEye AI account to continue</p>
+          <p>Sign in to your JanNayak AI account to continue</p>
         </div>
 
         <ErrorMessage
@@ -102,7 +102,7 @@ const Login = () => {
             type="text"
             value={formData.usernameOrEmail}
             onChange={handleChange}
-            placeholder="citizen@civiceye.local or username"
+            placeholder="citizen@jannayak.com or username"
             error={errors.usernameOrEmail}
             required
             autoComplete="username"

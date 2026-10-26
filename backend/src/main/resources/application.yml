@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: civiceye-ai
+    name: jannayak-ai
   datasource:
     url: ${SPRING_DATASOURCE_URL:${DATABASE_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:civiceye}${DB_SSL_QUERY:}}}
     username: ${SPRING_DATASOURCE_USERNAME:${DB_USER:postgres}}

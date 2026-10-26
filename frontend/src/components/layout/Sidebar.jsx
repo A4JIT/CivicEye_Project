@@ -92,7 +92,7 @@ const Sidebar = () => {
         {!collapsed && (
           <Link to="/" className="sidebar-brand-title" style={{ textDecoration: 'none', color: 'inherit' }}>
             <span className="brand-dot"></span>
-            <span>CivicEye AI</span>
+            <span>JanNayak AI</span>
           </Link>
         )}
       </div>

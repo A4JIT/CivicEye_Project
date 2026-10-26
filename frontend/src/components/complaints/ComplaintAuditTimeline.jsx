@@ -95,7 +95,7 @@ const ACTOR_ROLE_BADGES = {
   ADMIN: { label: 'Admin Triage', className: 'role-admin', icon: '🛡️' },
   DEPARTMENT_USER: { label: 'Department Staff', className: 'role-officer', icon: '👷' },
   OFFICER: { label: 'Department Staff', className: 'role-officer', icon: '👷' },
-  SYSTEM: { label: 'CivicEye System', className: 'role-system', icon: '⚙️' },
+  SYSTEM: { label: 'JanNayak System', className: 'role-system', icon: '⚙️' },
   AI: { label: 'AI Engine', className: 'role-ai', icon: '🤖' },
 }
 
