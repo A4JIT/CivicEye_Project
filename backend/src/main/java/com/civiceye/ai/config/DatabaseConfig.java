@@ -9,12 +9,19 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
 import javax.sql.DataSource;
-import java.net.URI;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Configuration
 public class DatabaseConfig {
 
     private static final Logger log = LoggerFactory.getLogger(DatabaseConfig.class);
+
+    // Regex to parse postgres[ql]://[username]:[password]@[host][:port]/[database][?query]
+    // Safely handles special characters (#, %, &, !) in passwords without URISyntaxException
+    private static final Pattern PG_URI_PATTERN = Pattern.compile(
+            "^(?:postgres|postgresql)://([^:]+):(.+)@([^:/]+)(?::(\\d+))?/([^?]+)(?:\\?(.*))?$"
+    );
 
     @Value("${spring.datasource.url}")
     private String rawUrl;
@@ -33,31 +40,20 @@ public class DatabaseConfig {
     public DataSource dataSource() {
         String url = rawUrl != null ? rawUrl.trim() : "";
 
-        // Check if raw URL is a standard cloud URI like postgres://user:pass@host:port/dbname
         if (url.startsWith("postgres://") || url.startsWith("postgresql://")) {
-            try {
-                String parseable = url.replaceFirst("^(postgres|postgresql)://", "http://");
-                URI uri = new URI(parseable);
+            Matcher matcher = PG_URI_PATTERN.matcher(url);
+            if (matcher.matches()) {
+                String username = matcher.group(1);
+                String password = matcher.group(2);
+                String host = matcher.group(3);
+                String port = matcher.group(4) != null ? matcher.group(4) : "5432";
+                String dbName = matcher.group(5);
+                String query = matcher.group(6);
 
-                String host = uri.getHost();
-                int port = uri.getPort() == -1 ? 5432 : uri.getPort();
-                String path = uri.getPath(); // /dbname
-                String query = uri.getQuery();
+                String jdbcUrl = "jdbc:postgresql://" + host + ":" + port + "/" + dbName
+                        + (query != null && !query.isBlank() ? "?" + query : "");
 
-                String jdbcUrl = "jdbc:postgresql://" + host + ":" + port + path + (query != null ? "?" + query : "");
-
-                String username = defaultUsername;
-                String password = defaultPassword;
-
-                if (uri.getUserInfo() != null) {
-                    String[] userInfo = uri.getUserInfo().split(":", 2);
-                    username = userInfo[0];
-                    if (userInfo.length > 1) {
-                        password = userInfo[1];
-                    }
-                }
-
-                log.info("Successfully converted cloud PostgreSQL URI to JDBC URL for host: {}:{}", host, port);
+                log.info("Configured PostgreSQL DataSource from URI: jdbc:postgresql://{}:{}/{}", host, port, dbName);
 
                 return DataSourceBuilder.create()
                         .url(jdbcUrl)
@@ -65,8 +61,8 @@ public class DatabaseConfig {
                         .password(password)
                         .driverClassName("org.postgresql.Driver")
                         .build();
-            } catch (Exception e) {
-                log.warn("Failed to parse PostgreSQL URI as URI, falling back to raw configuration: {}", e.getMessage());
+            } else {
+                log.warn("PostgreSQL URI did not match expected pattern: {}", url);
             }
         }
 
