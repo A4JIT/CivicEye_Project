@@ -16,7 +16,7 @@ public class HealthController {
     public ResponseEntity<Map<String, Object>> healthCheck() {
         return ResponseEntity.ok(Map.of(
                 "status", "UP",
-                "service", "CivicEye AI Backend",
+                "service", "JanNayak AI Backend",
                 "timestamp", Instant.now().toString(),
                 "environment", "production-ready"
         ));

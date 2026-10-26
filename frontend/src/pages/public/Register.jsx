@@ -116,7 +116,7 @@ const Register = () => {
             <span className="badge badge-info" style={{ fontWeight: 600 }}>Citizen Portal</span>
           </div>
           <h1>Create an Account</h1>
-          <p>Join CivicEye AI to report civic issues and improve your city</p>
+          <p>Join JanNayak AI to report civic issues and improve your city</p>
         </div>
 
         <ErrorMessage

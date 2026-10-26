@@ -1541,7 +1541,7 @@ const CreateComplaint = () => {
                 <div className="ai-verification-spinner" />
                 <div className="ai-verification-content">
                   <div className="ai-verification-title">
-                    <span className="ai-spark-icon">✨</span> CivicEye AI Vision Analyzing...
+                    <span className="ai-spark-icon">✨</span> JanNayak AI Vision Analyzing...
                   </div>
                   <div className="ai-verification-desc">
                     Scanning photo visual patterns to verify relevance for <strong>{CATEGORIES.find((c) => c.id === formData.category)?.label || 'Selected Category'}</strong>...
@@ -1681,7 +1681,7 @@ const CreateComplaint = () => {
             </div>
             <div className="modal-body">
               <p className="modal-instruction-text" style={{ color: '#e2e8f0' }}>
-                CivicEye AI detected a complaint with{' '}
+                JanNayak AI detected a complaint with{' '}
                 <strong>{Math.round(duplicateWarning.topMatch.similarityScore * 100)}% similarity</strong> already logged in this area.
               </p>
 

@@ -330,7 +330,7 @@ const ComplaintTracking = () => {
               <span className="welcome-tag">Public Transparency Portal</span>
               <h3 className="welcome-title">Real-Time Municipal Resolution Lifecycle</h3>
               <p className="welcome-desc">
-                CivicEye AI provides end-to-end visibility for every reported civic defect. From automated AI triage
+                JanNayak AI provides end-to-end visibility for every reported civic defect. From automated AI triage
                 to department deployment, engineer work logs, and certified photographic proof verification.
               </p>
             </div>

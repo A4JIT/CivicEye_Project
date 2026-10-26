@@ -716,7 +716,7 @@ const NON_CIVIC_PATTERNS = [
     type: 'SELFIE_PORTRAIT',
     label: 'Personal Selfie / Portrait',
     keywords: ['selfie', 'portrait', 'my_pic', 'mypic', 'profile', 'face', 'person', 'myself', 'me.jpg', 'me.png', 'avatar', 'model'],
-    reason: 'The uploaded image appears to be a personal selfie or portrait. CivicEye requires photographic proof of the public municipal defect.',
+    reason: 'The uploaded image appears to be a personal selfie or portrait. JanNayak requires photographic proof of the public municipal defect.',
   },
   {
     type: 'PET_ANIMAL',
@@ -818,7 +818,7 @@ export const computeLocalPhotoVerification = (category, file, visual = null, con
         categoryLabel: currentMeta.label,
         detectedSubject: 'Personal Selfie / Portrait',
         confidenceScore: 0.96,
-        rejectionReason: 'AI Rejection: Visual analysis detected a personal selfie or portrait. CivicEye requires photographic proof of the public civic defect.',
+        rejectionReason: 'AI Rejection: Visual analysis detected a personal selfie or portrait. JanNayak requires photographic proof of the public civic defect.',
         detailedReason: 'The uploaded image contains human portrait features rather than public infrastructure evidence.',
         matchedFeatures: ['visual_skin_detected'],
       }
