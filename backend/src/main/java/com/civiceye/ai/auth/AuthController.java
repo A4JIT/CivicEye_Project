@@ -1,5 +1,6 @@
 package com.civiceye.ai.auth;
 
+import com.civiceye.ai.auth.dto.AdminRegisterRequest;
 import com.civiceye.ai.auth.dto.AuthResponse;
 import com.civiceye.ai.auth.dto.LoginRequest;
 import com.civiceye.ai.auth.dto.RegisterRequest;
@@ -28,6 +29,13 @@ public class AuthController {
         AuthResponse response = authService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("User registered successfully", response));
+    }
+
+    @PostMapping("/register-admin")
+    public ResponseEntity<ApiResponse<AuthResponse>> registerAdmin(@Valid @RequestBody AdminRegisterRequest request) {
+        AuthResponse response = authService.registerAdmin(request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Admin registered successfully", response));
     }
 
     @PostMapping("/login")

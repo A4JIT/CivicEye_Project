@@ -5,6 +5,9 @@ import com.civiceye.ai.dashboard.dto.AdminDashboardResponse;
 import com.civiceye.ai.dashboard.dto.CitizenDashboardResponse;
 import com.civiceye.ai.dashboard.dto.DepartmentDashboardResponse;
 import com.civiceye.ai.security.UserPrincipal;
+import com.civiceye.ai.user.Role;
+import com.civiceye.ai.user.User;
+import com.civiceye.ai.user.UserRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -15,9 +18,11 @@ import org.springframework.web.bind.annotation.*;
 public class DashboardController {
 
     private final DashboardService dashboardService;
+    private final UserRepository userRepository;
 
-    public DashboardController(DashboardService dashboardService) {
+    public DashboardController(DashboardService dashboardService, UserRepository userRepository) {
         this.dashboardService = dashboardService;
+        this.userRepository = userRepository;
     }
 
     @GetMapping("/citizen")
@@ -49,8 +54,18 @@ public class DashboardController {
     @PreAuthorize("hasAnyRole('DEPARTMENT_USER', 'ADMIN')")
     public ResponseEntity<ApiResponse<DepartmentDashboardResponse>> getDepartmentDashboard(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
-            @RequestParam(defaultValue = "1") Long departmentId) {
-        DepartmentDashboardResponse response = dashboardService.getDepartmentDashboard(departmentId);
+            @RequestParam(required = false) Long departmentId) {
+        Long targetDeptId = departmentId;
+        if (targetDeptId == null && userPrincipal != null && userPrincipal.getRole() == Role.DEPARTMENT_USER) {
+            User officer = userRepository.findById(userPrincipal.getId()).orElse(null);
+            if (officer != null && officer.getDepartment() != null) {
+                targetDeptId = officer.getDepartment().getId();
+            }
+        }
+        if (targetDeptId == null) {
+            targetDeptId = 1L;
+        }
+        DepartmentDashboardResponse response = dashboardService.getDepartmentDashboard(targetDeptId);
         return ResponseEntity.ok(ApiResponse.success("Department dashboard metrics retrieved", response));
     }
 }

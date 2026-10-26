@@ -79,4 +79,21 @@ class SecurityConfigIntegrationTest {
                         .header("Authorization", "Bearer invalid-token"))
                 .andExpect(status().isUnauthorized());
     }
+
+    @Test
+    @DisplayName("Department endpoints without auth should return 401 Unauthorized")
+    void departmentEndpoint_WithoutAuth_Returns401() throws Exception {
+        mockMvc.perform(get("/api/department/complaints"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("Department endpoints with citizen role should return 403 Forbidden")
+    void departmentEndpoint_WithCitizenRole_Returns403() throws Exception {
+        String token = jwtTokenProvider.generateToken(savedUser);
+
+        mockMvc.perform(get("/api/department/complaints")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden());
+    }
 }

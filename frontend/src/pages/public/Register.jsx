@@ -2,15 +2,8 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import Input from '../../components/common/Input'
-import Select from '../../components/common/Select'
 import Button from '../../components/common/Button'
 import ErrorMessage from '../../components/common/ErrorMessage'
-
-const ROLE_OPTIONS = [
-  { value: 'CITIZEN', label: 'Citizen (Report & Track Issues)' },
-  { value: 'DEPARTMENT_USER', label: 'Department Officer (Resolve Issues)' },
-  { value: 'ADMIN', label: 'System Administrator (Full Management)' },
-]
 
 const Register = () => {
   const { register, loading } = useAuth()
@@ -22,7 +15,6 @@ const Register = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'CITIZEN',
   })
 
   const [errors, setErrors] = useState({})
@@ -65,10 +57,6 @@ const Register = () => {
       newErrors.confirmPassword = 'Passwords do not match'
     }
 
-    if (!formData.role) {
-      newErrors.role = 'Please select a role'
-    }
-
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -99,7 +87,8 @@ const Register = () => {
         username: formData.username.trim(),
         email: formData.email.trim(),
         password: formData.password,
-        role: formData.role,
+        role: 'CITIZEN',
+        departmentId: null,
       }
 
       await register(payload)
@@ -115,7 +104,17 @@ const Register = () => {
   return (
     <div className="auth-page">
       <div className="auth-card">
+        <div className="auth-top-bar">
+          <Link to="/" className="btn-auth-back-home" data-testid="btn-register-home" title="Return to Homepage">
+            ← 🏠 Back to Home
+          </Link>
+        </div>
+
         <div className="auth-header">
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+            <span style={{ fontSize: '1.4rem' }}>👥</span>
+            <span className="badge badge-info" style={{ fontWeight: 600 }}>Citizen Portal</span>
+          </div>
           <h1>Create an Account</h1>
           <p>Join CivicEye AI to report civic issues and improve your city</p>
         </div>
@@ -172,17 +171,6 @@ const Register = () => {
             autoComplete="email"
           />
 
-          <Select
-            id="role"
-            name="role"
-            label="Account Role"
-            value={formData.role}
-            onChange={handleChange}
-            options={ROLE_OPTIONS}
-            error={errors.role}
-            required
-          />
-
           <Input
             id="password"
             name="password"
@@ -229,9 +217,17 @@ const Register = () => {
           </Button>
         </form>
 
-        <div className="auth-footer">
-          Already have an account?{' '}
-          <Link to="/login">Sign in here</Link>
+        <div className="auth-footer" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div>
+            Already have an account?{' '}
+            <Link to="/login">Sign in here</Link>
+          </div>
+          <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '10px', fontSize: '0.85rem' }}>
+            <span style={{ color: '#94a3b8' }}>System Administrator? </span>
+            <Link to="/admin/register" style={{ color: '#38bdf8', fontWeight: 600 }}>
+              Register with Admin Code →
+            </Link>
+          </div>
         </div>
       </div>
     </div>

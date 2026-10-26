@@ -158,6 +158,36 @@ describe('Dashboard Component Suite', () => {
         expect(screen.getByText('CE-20261012-0001')).toBeDefined()
       })
     })
+
+    it('renders dashboard header with user chip and log out button that triggers logout', async () => {
+      const mockLogout = vi.fn()
+      render(
+        <BrowserRouter>
+          <AuthContext.Provider
+            value={{
+              user: mockCitizenUser,
+              token: 'mock-jwt-token',
+              isAuthenticated: true,
+              loading: false,
+              login: vi.fn(),
+              logout: mockLogout,
+              register: vi.fn(),
+            }}
+          >
+            <CitizenDashboard />
+          </AuthContext.Provider>
+        </BrowserRouter>
+      )
+
+      await waitFor(() => {
+        expect(screen.getByTestId('btn-dashboard-logout')).toBeDefined()
+      })
+
+      const logoutBtn = screen.getByTestId('btn-dashboard-logout')
+      fireEvent.click(logoutBtn)
+
+      expect(mockLogout).toHaveBeenCalledTimes(1)
+    })
   })
 
   describe('AdminDashboard', () => {
@@ -218,6 +248,16 @@ describe('Dashboard Component Suite', () => {
 
       const sidebarEl = screen.getByTestId('dashboard-sidebar')
       expect(sidebarEl.className).toContain('collapsed')
+    })
+
+    it('does not render Report Issue and Track Issue options for admin user', () => {
+      renderWithAuth(<Sidebar />, mockAdminUser)
+
+      expect(screen.getByText('Command Center')).toBeDefined()
+      expect(screen.getByText('All Complaints')).toBeDefined()
+      expect(screen.getByText('Department Staff')).toBeDefined()
+      expect(screen.queryByText('Report Issue')).toBeNull()
+      expect(screen.queryByText('Track Issue')).toBeNull()
     })
   })
 })

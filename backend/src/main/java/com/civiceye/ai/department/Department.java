@@ -43,6 +43,25 @@ public class Department {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public String getCode() { return code; }
+    public void setCode(String code) { this.code = code; }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+    public String getContactEmail() { return contactEmail; }
+    public void setContactEmail(String contactEmail) { this.contactEmail = contactEmail; }
+    public String getContactPhone() { return contactPhone; }
+    public void setContactPhone(String contactPhone) { this.contactPhone = contactPhone; }
+    public boolean isActive() { return isActive; }
+    public void setActive(boolean active) { isActive = active; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
@@ -52,5 +71,45 @@ public class Department {
     @PreUpdate
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public static DepartmentBuilder builder() {
+        return new DepartmentBuilder();
+    }
+
+    public static class DepartmentBuilder {
+        private Long id;
+        private String name;
+        private String code;
+        private String description;
+        private String contactEmail;
+        private String contactPhone;
+        private boolean isActive = true;
+        private LocalDateTime createdAt;
+        private LocalDateTime updatedAt;
+
+        public DepartmentBuilder id(Long id) { this.id = id; return this; }
+        public DepartmentBuilder name(String name) { this.name = name; return this; }
+        public DepartmentBuilder code(String code) { this.code = code; return this; }
+        public DepartmentBuilder description(String description) { this.description = description; return this; }
+        public DepartmentBuilder contactEmail(String contactEmail) { this.contactEmail = contactEmail; return this; }
+        public DepartmentBuilder contactPhone(String contactPhone) { this.contactPhone = contactPhone; return this; }
+        public DepartmentBuilder isActive(boolean isActive) { this.isActive = isActive; return this; }
+        public DepartmentBuilder createdAt(LocalDateTime createdAt) { this.createdAt = createdAt; return this; }
+        public DepartmentBuilder updatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; return this; }
+
+        public Department build() {
+            Department d = new Department();
+            d.setId(this.id);
+            d.setName(this.name);
+            d.setCode(this.code);
+            d.setDescription(this.description);
+            d.setContactEmail(this.contactEmail);
+            d.setContactPhone(this.contactPhone);
+            d.setActive(this.isActive);
+            d.setCreatedAt(this.createdAt);
+            d.setUpdatedAt(this.updatedAt);
+            return d;
+        }
     }
 }

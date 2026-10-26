@@ -14,16 +14,19 @@ const renderWithProviders = (ui) => {
 }
 
 describe('Register Component', () => {
-  it('renders registration form with all required fields', () => {
+  it('renders registration form strictly for citizen users without role or department selectors', () => {
     renderWithProviders(<Register />)
 
     expect(screen.getByRole('heading', { name: /create an account/i })).toBeDefined()
     expect(screen.getByLabelText(/full name/i)).toBeDefined()
     expect(screen.getByLabelText(/username/i)).toBeDefined()
     expect(screen.getByLabelText(/email address/i)).toBeDefined()
-    expect(screen.getByLabelText(/account role/i)).toBeDefined()
     expect(screen.getByLabelText(/password \(min 6 characters\)/i)).toBeDefined()
     expect(screen.getByLabelText(/confirm password/i)).toBeDefined()
+
+    // Mentor Requirement: No admin or department role selection allowed in public registration
+    expect(screen.queryByLabelText(/account role/i)).toBeNull()
+    expect(screen.queryByLabelText(/assigned municipal department/i)).toBeNull()
   })
 
   it('validates empty inputs on form submission', async () => {
@@ -63,5 +66,12 @@ describe('Register Component', () => {
 
     const loginLink = screen.getByRole('link', { name: /sign in here/i })
     expect(loginLink.getAttribute('href')).toBe('/login')
+  })
+
+  it('has navigation link for administrators to register with special code', () => {
+    renderWithProviders(<Register />)
+
+    const adminLink = screen.getByRole('link', { name: /register with admin code/i })
+    expect(adminLink.getAttribute('href')).toBe('/admin/register')
   })
 })

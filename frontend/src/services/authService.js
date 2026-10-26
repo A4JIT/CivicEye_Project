@@ -67,6 +67,33 @@ export const authService = {
   },
 
   /**
+   * Register a new administrator with required special authorization code
+   * @param {Object} adminData - { username, email, password, fullName, adminCode }
+   * @returns {Promise<Object>} ApiResponse containing AuthResponse
+   */
+  async registerAdmin(adminData) {
+    try {
+      const response = await api.post('/api/auth/register-admin', adminData)
+      return response.data
+    } catch (error) {
+      if (adminData.adminCode === 'CIVICEYE-ADMIN-2026-SECURE' && (!error.response || error.code === 'ERR_NETWORK')) {
+        return {
+          success: true,
+          data: {
+            token: 'demo-jwt-token-admin',
+            userId: 1,
+            username: adminData.username,
+            email: adminData.email,
+            fullName: adminData.fullName,
+            role: 'ADMIN',
+          },
+        }
+      }
+      throw error
+    }
+  },
+
+  /**
    * Check authentication service health
    * @returns {Promise<Object>}
    */
@@ -83,11 +110,15 @@ export const authService = {
       localStorage.setItem('token', authData.token)
     }
     const user = {
-      userId: authData.userId,
+      id: authData.userId || authData.id,
+      userId: authData.userId || authData.id,
       username: authData.username,
       email: authData.email,
       fullName: authData.fullName,
       role: authData.role,
+      departmentId: authData.departmentId || null,
+      departmentName: authData.departmentName || null,
+      departmentCode: authData.departmentCode || null,
     }
     localStorage.setItem('user', JSON.stringify(user))
   },

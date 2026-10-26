@@ -60,6 +60,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                .cors(org.springframework.security.config.Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(unauthorizedHandler)
@@ -67,11 +68,19 @@ public class SecurityConfig {
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/auth/**", "/api/v1/auth/**").permitAll()
+                        .requestMatchers("/api/health", "/api/v1/health", "/health").permitAll()
+                        .requestMatchers("/api/files/**", "/api/v1/files/**").permitAll()
+                        .requestMatchers("/api/departments/**", "/departments/**").permitAll()
+                        .requestMatchers("/api/complaints/number/**", "/api/v1/complaints/number/**", "/api/complaints/*/timeline", "/api/v1/complaints/*/timeline").permitAll()
+                        .requestMatchers("/api/complaints/check-duplicate", "/api/v1/complaints/check-duplicate").permitAll()
                         .requestMatchers("/error").permitAll()
+                        .requestMatchers("/api/admin/**", "/api/v1/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/dashboard/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/department/**", "/api/v1/department/**").hasAnyRole("DEPARTMENT_USER", "ADMIN")
                         .requestMatchers("/api/dashboard/department/**").hasAnyRole("DEPARTMENT_USER", "ADMIN")
                         .requestMatchers("/api/dashboard/citizen/**").hasAnyRole("CITIZEN", "ADMIN")
+                        .requestMatchers("/api/ai/**", "/api/v1/ai/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())

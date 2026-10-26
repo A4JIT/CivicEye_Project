@@ -238,4 +238,71 @@ class AuthServiceTest {
         assertTrue(exception.getMessage().contains("Username is already taken"));
         verify(userRepository, never()).save(any());
     }
+
+    @Test
+    @DisplayName("Should throw BadRequestException when attempting to register non-citizen role publicly")
+    void register_ThrowsBadRequestException_WhenRoleIsNotCitizen() {
+        registerRequest.setRole(Role.ADMIN);
+
+        BadRequestException exception = assertThrows(
+                BadRequestException.class,
+                () -> authService.register(registerRequest)
+        );
+
+        assertTrue(exception.getMessage().contains("restricted to citizens only"));
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Should successfully register admin when valid secret code is provided")
+    void registerAdmin_Success_WhenValidCode() {
+        authService.setAdminSecretCode("CIVICEYE-ADMIN-2026-SECURE");
+
+        com.civiceye.ai.auth.dto.AdminRegisterRequest adminReq = com.civiceye.ai.auth.dto.AdminRegisterRequest.builder()
+                .username("super_admin")
+                .email("admin@civiceye.com")
+                .password("Admin@123")
+                .fullName("System Admin")
+                .adminCode("CIVICEYE-ADMIN-2026-SECURE")
+                .build();
+
+        when(userRepository.existsByEmail("admin@civiceye.com")).thenReturn(false);
+        when(userRepository.existsByUsername("super_admin")).thenReturn(false);
+        when(passwordEncoder.encode("Admin@123")).thenReturn("$2a$10$encodedAdminHash");
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> {
+            User u = inv.getArgument(0);
+            u.setId(99L);
+            return u;
+        });
+
+        AuthResponse response = authService.registerAdmin(adminReq);
+
+        assertNotNull(response);
+        assertEquals("super_admin", response.getUsername());
+        assertEquals("admin@civiceye.com", response.getEmail());
+        assertEquals(Role.ADMIN, response.getRole());
+        verify(userRepository, times(1)).save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("Should throw UnauthorizedException when admin secret code is incorrect")
+    void registerAdmin_ThrowsUnauthorizedException_WhenCodeIsInvalid() {
+        authService.setAdminSecretCode("CIVICEYE-ADMIN-2026-SECURE");
+
+        com.civiceye.ai.auth.dto.AdminRegisterRequest adminReq = com.civiceye.ai.auth.dto.AdminRegisterRequest.builder()
+                .username("hacker")
+                .email("hacker@civiceye.com")
+                .password("Hacker@123")
+                .fullName("Fake Admin")
+                .adminCode("WRONG_CODE_XYZ")
+                .build();
+
+        UnauthorizedException exception = assertThrows(
+                UnauthorizedException.class,
+                () -> authService.registerAdmin(adminReq)
+        );
+
+        assertTrue(exception.getMessage().contains("Invalid admin authorization code"));
+        verify(userRepository, never()).save(any());
+    }
 }

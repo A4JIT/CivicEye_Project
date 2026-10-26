@@ -1,12 +1,14 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import departmentService from '../../services/departmentService'
 
 const Sidebar = () => {
   const { user, logout } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
   const [collapsed, setCollapsed] = useState(false)
+  const [assignedCount, setAssignedCount] = useState(null)
 
   const handleLogout = () => {
     logout()
@@ -15,25 +17,51 @@ const Sidebar = () => {
 
   const role = user?.role || 'CITIZEN'
 
+  useEffect(() => {
+    let isMounted = true
+    if (role === 'DEPARTMENT_USER') {
+      departmentService
+        .getDepartmentComplaints({ status: 'ASSIGNED' })
+        .then((data) => {
+          if (isMounted) {
+            const count = data?.totalItems ?? (data?.complaints ? data.complaints.length : null)
+            if (count !== null && count !== undefined) {
+              setAssignedCount(count)
+            }
+          }
+        })
+        .catch(() => {})
+    }
+    return () => {
+      isMounted = false
+    }
+  }, [role])
+
   const citizenNav = [
+    { label: 'Home', path: '/', icon: '🏠' },
     { label: 'Overview', path: '/dashboard', icon: '📊' },
     { label: 'Report Issue', path: '/complaints/new', icon: '📝' },
     { label: 'My Complaints', path: '/complaints/my', icon: '📋' },
-    { label: 'City Alerts', path: '/alerts', icon: '🔔' },
+    { label: 'Track Issue', path: '/complaints/track', icon: '🔍' },
   ]
 
   const adminNav = [
+    { label: 'Home', path: '/', icon: '🏠' },
     { label: 'Command Center', path: '/dashboard', icon: '🏛️' },
     { label: 'All Complaints', path: '/admin/complaints', icon: '📑' },
-    { label: 'Departments', path: '/admin/departments', icon: '🏢' },
-    { label: 'User Directory', path: '/admin/users', icon: '👥' },
+    { label: 'Department Staff', path: '/admin/staff', icon: '👥' },
   ]
 
   const departmentNav = [
+    { label: 'Home', path: '/', icon: '🏠' },
     { label: 'Department Queue', path: '/dashboard', icon: '🏢' },
-    { label: 'Assigned Work', path: '/department/assigned', icon: '🔧' },
-    { label: 'High Priority', path: '/department/urgent', icon: '⚡' },
-    { label: 'Resolved Archive', path: '/department/resolved', icon: '✅' },
+    {
+      label: 'Assigned Work',
+      path: '/department/complaints',
+      icon: '🔧',
+      badge: assignedCount != null && assignedCount > 0 ? assignedCount : null,
+    },
+    { label: 'Track Issue', path: '/complaints/track', icon: '🔍' },
   ]
 
   let navItems = citizenNav
@@ -62,10 +90,10 @@ const Sidebar = () => {
           {collapsed ? '▶' : '◀'}
         </button>
         {!collapsed && (
-          <div className="sidebar-brand-title">
+          <Link to="/" className="sidebar-brand-title" style={{ textDecoration: 'none', color: 'inherit' }}>
             <span className="brand-dot"></span>
-            <span>CivicPortal</span>
-          </div>
+            <span>CivicEye AI</span>
+          </Link>
         )}
       </div>
 
@@ -83,7 +111,12 @@ const Sidebar = () => {
 
       <nav className="sidebar-nav">
         {navItems.map((item) => {
-          const isActive = location.pathname === item.path
+          const isActive =
+            item.path === '/'
+              ? location.pathname === '/'
+              : location.pathname === item.path ||
+                (item.path === '/complaints/new' && location.pathname.startsWith('/complaints/new')) ||
+                (item.path === '/complaints/track' && location.pathname.startsWith('/complaints/track'))
           return (
             <Link
               key={item.label}
@@ -93,20 +126,34 @@ const Sidebar = () => {
             >
               <span className="sidebar-icon">{item.icon}</span>
               {!collapsed && <span className="sidebar-label">{item.label}</span>}
+              {!collapsed && item.badge != null && (
+                <span className="sidebar-badge" data-testid="sidebar-badge">{item.badge}</span>
+              )}
             </Link>
           )
         })}
       </nav>
 
       <div className="sidebar-footer">
-        <button
-          className="sidebar-logout-btn"
-          onClick={handleLogout}
-          title={collapsed ? 'Log Out' : undefined}
-        >
-          <span className="sidebar-icon">🚪</span>
-          {!collapsed && <span>Sign Out</span>}
-        </button>
+        {user ? (
+          <button
+            className="sidebar-logout-btn"
+            onClick={handleLogout}
+            title={collapsed ? 'Log Out' : undefined}
+          >
+            <span className="sidebar-icon">🚪</span>
+            {!collapsed && <span>Sign Out</span>}
+          </button>
+        ) : (
+          <Link
+            to="/login"
+            className="sidebar-link"
+            title={collapsed ? 'Sign In' : undefined}
+          >
+            <span className="sidebar-icon">🔑</span>
+            {!collapsed && <span>Sign In</span>}
+          </Link>
+        )}
       </div>
     </aside>
   )

@@ -1,20 +1,21 @@
 server:
-  port: 8080
+  port: ${PORT:8080}
 
 spring:
   application:
     name: civiceye-ai
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:civiceye}
-    username: ${DB_USER:postgres}
-    password: ${DB_PASSWORD:postgres}
+    url: ${SPRING_DATASOURCE_URL:${DATABASE_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:civiceye}${DB_SSL_QUERY:}}}
+    username: ${SPRING_DATASOURCE_USERNAME:${DB_USER:postgres}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${DB_PASSWORD:postgres}}
   jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: true
+        format_sql: false
     show-sql: false
 
 app:
@@ -22,4 +23,8 @@ app:
     secret: ${JWT_SECRET:your_super_secret_key_change_in_production_1234567890}
     expiration: 86400000 # 24 hours
   storage:
-    location: uploads
+    location: ${UPLOAD_DIR:uploads}
+  security:
+    admin-secret-code: ${ADMIN_SECRET_CODE:CIVICEYE-ADMIN-2026-SECURE}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:*,http://127.0.0.1:*,https://*.vercel.app,https://*.onrender.com,https://*.railway.app,https://*.netlify.app}

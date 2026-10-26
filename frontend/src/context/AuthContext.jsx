@@ -37,11 +37,15 @@ export const AuthProvider = ({ children }) => {
       authService.setSession(authData)
       setToken(authData.token)
       setUser({
-        userId: authData.userId,
+        id: authData.userId || authData.id,
+        userId: authData.userId || authData.id,
         username: authData.username,
         email: authData.email,
         fullName: authData.fullName,
         role: authData.role,
+        departmentId: authData.departmentId || null,
+        departmentName: authData.departmentName || null,
+        departmentCode: authData.departmentCode || null,
       })
       return authData
     } catch (err) {
@@ -66,11 +70,15 @@ export const AuthProvider = ({ children }) => {
         authService.setSession(authData)
         setToken(authData.token)
         setUser({
-          userId: authData.userId,
+          id: authData.userId || authData.id,
+          userId: authData.userId || authData.id,
           username: authData.username,
           email: authData.email,
           fullName: authData.fullName,
           role: authData.role,
+          departmentId: authData.departmentId || null,
+          departmentName: authData.departmentName || null,
+          departmentCode: authData.departmentCode || null,
         })
       }
       return authData
@@ -79,6 +87,40 @@ export const AuthProvider = ({ children }) => {
         err.response?.data?.message ||
         err.message ||
         'Registration failed. Please verify the information provided.'
+      setError(message)
+      throw new Error(message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const registerAdmin = async (adminData) => {
+    setLoading(true)
+    setError(null)
+    try {
+      const response = await authService.registerAdmin(adminData)
+      const authData = response.data || response
+      if (authData.token) {
+        authService.setSession(authData)
+        setToken(authData.token)
+        setUser({
+          id: authData.userId || authData.id,
+          userId: authData.userId || authData.id,
+          username: authData.username,
+          email: authData.email,
+          fullName: authData.fullName,
+          role: authData.role || 'ADMIN',
+          departmentId: null,
+          departmentName: null,
+          departmentCode: null,
+        })
+      }
+      return authData
+    } catch (err) {
+      const message =
+        err.response?.data?.message ||
+        err.message ||
+        'Admin registration failed. Please verify your administrative code.'
       setError(message)
       throw new Error(message)
     } finally {
@@ -96,6 +138,7 @@ export const AuthProvider = ({ children }) => {
     error,
     login,
     register,
+    registerAdmin,
     logout,
     clearError,
   }
@@ -106,7 +149,18 @@ export const AuthProvider = ({ children }) => {
 export const useAuth = () => {
   const context = useContext(AuthContext)
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider')
+    return {
+      user: null,
+      token: null,
+      isAuthenticated: false,
+      loading: false,
+      error: null,
+      login: async () => {},
+      register: async () => {},
+      registerAdmin: async () => {},
+      logout: () => {},
+      clearError: () => {},
+    }
   }
   return context
 }

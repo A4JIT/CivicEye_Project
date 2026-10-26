@@ -1,5 +1,6 @@
 package com.civiceye.ai.user;
 
+import com.civiceye.ai.department.Department;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -33,6 +34,10 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private Role role;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "department_id")
+    private Department department;
 
     @Column(name = "is_active", nullable = false)
     @Builder.Default
@@ -108,6 +113,14 @@ public class User {
         this.createdAt = createdAt;
     }
 
+    public Department getDepartment() {
+        return department;
+    }
+
+    public void setDepartment(Department department) {
+        this.department = department;
+    }
+
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
     }
@@ -138,6 +151,7 @@ public class User {
         private String email;
         private String fullName;
         private Role role;
+        private Department department;
         private boolean isActive = true;
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
@@ -172,6 +186,11 @@ public class User {
             return this;
         }
 
+        public UserBuilder department(Department department) {
+            this.department = department;
+            return this;
+        }
+
         public UserBuilder isActive(boolean isActive) {
             this.isActive = isActive;
             return this;
@@ -195,6 +214,7 @@ public class User {
             user.setEmail(this.email);
             user.setFullName(this.fullName);
             user.setRole(this.role);
+            user.setDepartment(this.department);
             user.setActive(this.isActive);
             user.setCreatedAt(this.createdAt);
             user.setUpdatedAt(this.updatedAt);

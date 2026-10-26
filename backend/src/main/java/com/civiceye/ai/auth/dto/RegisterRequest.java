@@ -32,6 +32,7 @@ public class RegisterRequest {
     private String fullName;
 
     private Role role;
+    private Long departmentId;
 
     public String getUsername() {
         return username;
@@ -73,6 +74,14 @@ public class RegisterRequest {
         this.role = role;
     }
 
+    public Long getDepartmentId() {
+        return departmentId;
+    }
+
+    public void setDepartmentId(Long departmentId) {
+        this.departmentId = departmentId;
+    }
+
     public static RegisterRequestBuilder builder() {
         return new RegisterRequestBuilder();
     }
@@ -83,6 +92,7 @@ public class RegisterRequest {
         private String password;
         private String fullName;
         private Role role;
+        private Long departmentId;
 
         public RegisterRequestBuilder username(String username) {
             this.username = username;
@@ -109,6 +119,11 @@ public class RegisterRequest {
             return this;
         }
 
+        public RegisterRequestBuilder departmentId(Long departmentId) {
+            this.departmentId = departmentId;
+            return this;
+        }
+
         public RegisterRequest build() {
             RegisterRequest req = new RegisterRequest();
             req.setUsername(this.username);
@@ -116,6 +131,7 @@ public class RegisterRequest {
             req.setPassword(this.password);
             req.setFullName(this.fullName);
             req.setRole(this.role);
+            req.setDepartmentId(this.departmentId);
             return req;
         }
     }

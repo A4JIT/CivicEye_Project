@@ -3,10 +3,12 @@ import { Link } from 'react-router-dom'
 import DashboardLayout from '../../components/layout/DashboardLayout'
 import dashboardService from '../../services/dashboardService'
 import Loader from '../../components/common/Loader'
+import AuthenticatedImage from '../../components/common/AuthenticatedImage'
 
 const AdminDashboard = () => {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [previewImage, setPreviewImage] = useState(null)
 
   useEffect(() => {
     let isMounted = true
@@ -59,6 +61,13 @@ const AdminDashboard = () => {
           <span className="dot dot-amber"></span>
           <span>Registered Citizens: <strong>{data?.totalCitizens || 0} Accounts</strong></span>
         </div>
+        <Link
+          to="/admin/staff"
+          className="status-item"
+          style={{ textDecoration: 'none', color: '#38bdf8', fontWeight: 600, marginLeft: 'auto' }}
+        >
+          <span>👥 Manage Department Staff →</span>
+        </Link>
       </div>
 
       {/* KPI Cards */}
@@ -176,6 +185,37 @@ const AdminDashboard = () => {
                     {item.addressText && (
                       <span className="complaint-location">📍 {item.addressText}</span>
                     )}
+                    {item.imageUrl && (
+                      <div style={{ marginTop: '4px' }}>
+                        <button
+                          type="button"
+                          className="photo-proof-badge"
+                          title="Click to view citizen uploaded photo proof"
+                          onClick={() =>
+                            setPreviewImage({
+                              url: item.imageUrl,
+                              title: item.title,
+                              complaintNumber: item.trackingNumber,
+                            })
+                          }
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            background: 'rgba(56, 189, 248, 0.15)',
+                            color: '#38bdf8',
+                            border: '1px solid rgba(56, 189, 248, 0.4)',
+                            borderRadius: '6px',
+                            padding: '2px 8px',
+                            fontSize: '0.75rem',
+                            cursor: 'pointer',
+                            fontWeight: 600,
+                          }}
+                        >
+                          📸 View Defect Photo
+                        </button>
+                      </div>
+                    )}
                   </td>
                   <td>{item.citizenName || 'Verified Citizen'}</td>
                   <td>{item.departmentName || 'Unassigned'}</td>
@@ -195,6 +235,102 @@ const AdminDashboard = () => {
           </table>
         </div>
       </div>
+      {/* Lightbox / Preview Modal for Table photo click */}
+      {previewImage && (
+        <div
+          className="modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setPreviewImage(null)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.75)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '20px',
+          }}
+        >
+          <div
+            className="modal-container"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: '#0f172a',
+              border: '1px solid rgba(56, 189, 248, 0.3)',
+              borderRadius: '12px',
+              padding: '20px',
+              maxWidth: '650px',
+              width: '100%',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '16px',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                paddingBottom: '10px',
+              }}
+            >
+              <div>
+                <h4 style={{ margin: 0, color: '#f8fafc', fontSize: '1.1rem' }}>
+                  📸 Reported Defect Photo Proof
+                </h4>
+                <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
+                  {previewImage.complaintNumber} • {previewImage.title}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewImage(null)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#94a3b8',
+                  fontSize: '1.5rem',
+                  cursor: 'pointer',
+                  padding: '4px 8px',
+                }}
+              >
+                ✕
+              </button>
+            </div>
+            <div style={{ textAlign: 'center', minHeight: '260px' }}>
+              <AuthenticatedImage
+                src={previewImage.url}
+                alt="Defect Photo Proof"
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '450px',
+                  borderRadius: '8px',
+                  objectFit: 'contain',
+                }}
+                allowZoom={true}
+              />
+            </div>
+            <div
+              style={{
+                marginTop: '16px',
+                display: 'flex',
+                justifyContent: 'flex-end',
+              }}
+            >
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => setPreviewImage(null)}
+              >
+                Close Preview
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   )
 }
