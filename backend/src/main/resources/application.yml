@@ -9,8 +9,13 @@ spring:
     username: ${SPRING_DATASOURCE_USERNAME:${DB_USER:postgres}}
     password: ${SPRING_DATASOURCE_PASSWORD:${DB_PASSWORD:postgres}}
   jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
     show-sql: false
 
 app:

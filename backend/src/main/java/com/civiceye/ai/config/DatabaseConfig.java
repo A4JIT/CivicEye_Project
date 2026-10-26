@@ -18,7 +18,7 @@ public class DatabaseConfig {
     private static final Logger log = LoggerFactory.getLogger(DatabaseConfig.class);
 
     // Regex to parse postgres[ql]://[username]:[password]@[host][:port]/[database][?query]
-    // Safely handles special characters (#, %, &, !) in passwords without URISyntaxException
+    // Handles special characters in password cleanly
     private static final Pattern PG_URI_PATTERN = Pattern.compile(
             "^(?:postgres|postgresql)://([^:]+):(.+)@([^:/]+)(?::(\\d+))?/([^?]+)(?:\\?(.*))?$"
     );
@@ -40,6 +40,21 @@ public class DatabaseConfig {
     public DataSource dataSource() {
         String url = rawUrl != null ? rawUrl.trim() : "";
 
+        // Strip accidental wrapping quotes (single or double) from environment variable input
+        if ((url.startsWith("'") && url.endsWith("'")) || (url.startsWith("\"") && url.endsWith("\""))) {
+            url = url.substring(1, url.length() - 1).trim();
+        }
+
+        // Strip accidental "psql " command prefix if user copied "psql 'postgresql://...'"
+        if (url.startsWith("psql ")) {
+            url = url.substring(5).trim();
+            if ((url.startsWith("'") && url.endsWith("'")) || (url.startsWith("\"") && url.endsWith("\""))) {
+                url = url.substring(1, url.length() - 1).trim();
+            }
+        }
+
+        log.info("Initializing DataSource. Raw URL prefix: {}", url.length() > 20 ? url.substring(0, 20) + "..." : url);
+
         if (url.startsWith("postgres://") || url.startsWith("postgresql://")) {
             Matcher matcher = PG_URI_PATTERN.matcher(url);
             if (matcher.matches()) {
@@ -53,7 +68,8 @@ public class DatabaseConfig {
                 String jdbcUrl = "jdbc:postgresql://" + host + ":" + port + "/" + dbName
                         + (query != null && !query.isBlank() ? "?" + query : "");
 
-                log.info("Configured PostgreSQL DataSource from URI: jdbc:postgresql://{}:{}/{}", host, port, dbName);
+                log.info("Converted cloud PostgreSQL URI -> JDBC URL: jdbc:postgresql://{}:{}/{} (user={})",
+                        host, port, dbName, username);
 
                 return DataSourceBuilder.create()
                         .url(jdbcUrl)
@@ -62,9 +78,11 @@ public class DatabaseConfig {
                         .driverClassName("org.postgresql.Driver")
                         .build();
             } else {
-                log.warn("PostgreSQL URI did not match expected pattern: {}", url);
+                log.warn("PostgreSQL URI did not match regex pattern. Using fallback parser.");
             }
         }
+
+        log.info("Using standard DataSource configuration for URL: {}", url.contains("@") ? "cloud-url-with-credentials" : url);
 
         var builder = DataSourceBuilder.create()
                 .url(url)
