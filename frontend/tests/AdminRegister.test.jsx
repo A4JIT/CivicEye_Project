@@ -86,4 +86,31 @@ describe('AdminRegister Component', () => {
 
     expect(await screen.findByText(/administrator verified and registered/i)).toBeDefined()
   })
+
+  it('toggles admin authorization code visibility between masked and plain text', () => {
+    renderWithProviders(<AdminRegister />)
+
+    const codeInput = screen.getByLabelText(/special admin authorization code/i)
+    expect(codeInput.getAttribute('type')).toBe('password')
+
+    const toggleBtn = screen.getByRole('button', { name: /show authorization code/i })
+    fireEvent.click(toggleBtn)
+    expect(codeInput.getAttribute('type')).toBe('text')
+
+    const hideBtn = screen.getByRole('button', { name: /hide authorization code/i })
+    fireEvent.click(hideBtn)
+    expect(codeInput.getAttribute('type')).toBe('password')
+  })
+
+  it('auto-fills default authorization code when Use Default Key is clicked', () => {
+    renderWithProviders(<AdminRegister />)
+
+    const codeInput = screen.getByLabelText(/special admin authorization code/i)
+    expect(codeInput.value).toBe('')
+
+    const useDefaultBtn = screen.getByRole('button', { name: /use default key/i })
+    fireEvent.click(useDefaultBtn)
+
+    expect(codeInput.value).toBe('CIVICEYE-ADMIN-2026-SECURE')
+  })
 })

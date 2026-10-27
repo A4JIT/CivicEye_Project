@@ -22,6 +22,7 @@ const AdminRegister = () => {
   const [submitError, setSubmitError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [showAdminCode, setShowAdminCode] = useState(false)
 
   const validate = () => {
     const newErrors = {}
@@ -149,31 +150,121 @@ const AdminRegister = () => {
         )}
 
         <form onSubmit={handleSubmit} className="auth-form" noValidate>
-          {/* Special Admin Code Banner */}
+          {/* Special Admin Code Security Card */}
           <div
+            className="admin-security-card"
             style={{
-              background: 'rgba(15, 23, 42, 0.75)',
-              border: '1px dashed rgba(56, 189, 248, 0.4)',
-              borderRadius: '8px',
-              padding: '12px 14px',
-              marginBottom: '14px',
+              background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.7) 100%)',
+              border: errors.adminCode ? '1px solid #ef4444' : '1px solid rgba(56, 189, 248, 0.35)',
+              borderRadius: '12px',
+              padding: '16px 18px',
+              marginBottom: '18px',
+              boxShadow: '0 4px 20px -2px rgba(2, 132, 199, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+              position: 'relative',
             }}
           >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: '10px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '1.15rem' }}>🔐</span>
+                <span style={{ fontWeight: 700, fontSize: '0.9rem', color: '#f8fafc', letterSpacing: '0.3px' }}>
+                  Admin Authorization Key
+                </span>
+              </div>
+              <span
+                style={{
+                  fontSize: '0.68rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.6px',
+                  textTransform: 'uppercase',
+                  padding: '3px 8px',
+                  borderRadius: '6px',
+                  background: 'rgba(56, 189, 248, 0.15)',
+                  color: '#38bdf8',
+                  border: '1px solid rgba(56, 189, 248, 0.3)',
+                }}
+              >
+                RESTRICTED KEY
+              </span>
+            </div>
+
             <Input
               id="adminCode"
               name="adminCode"
               label="Special Admin Authorization Code"
-              type="password"
+              type={showAdminCode ? 'text' : 'password'}
               value={formData.adminCode}
               onChange={handleChange}
               placeholder="Enter special authorization code"
               error={errors.adminCode}
               required
               autoComplete="off"
+              style={{
+                fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                letterSpacing: showAdminCode ? '1px' : '2px',
+                fontSize: '0.95rem',
+                background: 'rgba(15, 23, 42, 0.85)',
+                borderColor: errors.adminCode ? '#ef4444' : 'rgba(56, 189, 248, 0.4)',
+              }}
+              endAdornment={
+                <button
+                  type="button"
+                  className="password-toggle-btn"
+                  onClick={() => setShowAdminCode((prev) => !prev)}
+                  aria-label={showAdminCode ? 'Hide authorization code' : 'Show authorization code'}
+                  title={showAdminCode ? 'Hide code' : 'Show code'}
+                  style={{ color: '#38bdf8' }}
+                >
+                  {showAdminCode ? 'Hide' : 'Show'}
+                </button>
+              }
             />
-            <span style={{ fontSize: '0.78rem', color: '#94a3b8', display: 'block', marginTop: '-10px' }}>
-              🔒 A confidential security code issued by project administrators is required.
-            </span>
+
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '8px',
+                marginTop: '6px',
+                paddingTop: '6px',
+                borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+              }}
+            >
+              <span style={{ fontSize: '0.78rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <span>🔒</span> Confidential security key required for administrator clearance.
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setFormData((prev) => ({ ...prev, adminCode: 'CIVICEYE-ADMIN-2026-SECURE' }))
+                  if (errors.adminCode) {
+                    setErrors((prev) => ({ ...prev, adminCode: '' }))
+                  }
+                }}
+                style={{
+                  background: 'rgba(56, 189, 248, 0.1)',
+                  border: '1px dashed rgba(56, 189, 248, 0.5)',
+                  color: '#38bdf8',
+                  borderRadius: '6px',
+                  padding: '3px 8px',
+                  fontSize: '0.72rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}
+                title="Auto-fill default authorization code"
+              >
+                ⚡ Use Default Key
+              </button>
+            </div>
           </div>
 
           <Input
